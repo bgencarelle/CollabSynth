@@ -5,35 +5,36 @@
 #include <MIDI.h>
 #include <Audio.h>
 #include <Wire.h>
-
-AudioOutputAnalogStereo  audioOut;
-
-
 #define MIDI_SERIAL Serial1
 
-MIDI_CREATE_INSTANCE(HardwareSerial, MIDI_SERIAL, midiB);
-
-
 float MidiNotesHZ[127];
+AudioOutputAnalogStereo  audioOut;
+
+MIDI_CREATE_INSTANCE(HardwareSerial, MIDI_SERIAL, midiB);
+  uint32_t i = 0;
+  uint32_t x = 0;
+  uint32_t lo = 1;
+  int64_t randSource = 1;
+
 #include "GuitarMIDI.h"
 #include "MidiConfig.h"
 void setup()
 {
-  AudioMemory(64);
+  float a=440.0;
+  for (int x = 0; x<127; x++)
+  {
+    MidiNotesHZ[x] = (a/32.0) * ( powf(2.0,(((float)x-9.0)/12.0)));
+  }
+  AudioMemory(30);
   Serial.begin(9600);
   Serial.println("Begin");
+  
   stringsSetup();
   midiSetup();
-  float a = 440.0; // a is 440 hz...
-  for (int x = 0; x < 127; ++x)
-    {
-       MidiNotesHZ[x] = (a / 32.0) * ( powf(2.0,(((float)x - 9.0) / 12.0)));
-    }
+    delay(700);
 }
 
 void loop()
 {
-  midiB.read();
-  
-
+ midiB.read();
 }

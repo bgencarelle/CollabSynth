@@ -1,19 +1,15 @@
-#define KP_MOD 1
 #define MAX_STRINGS 12
+#define PITCHBEND_RANGE -(1.0/4096.0)  //should be 8192 >> or << by no more than say 5
 #include "chords.h"
 
 // Special thanks to Matthew Rahtz - http://amid.fish/karplus-strong/
-int oldPitch = 40;
+int oldNote = 40;
 uint8_t oldStrings = 0;
 int oldmodValue = 127;
 uint8_t strings = 0;
 
-
-#ifdef KP_MOD
 AudioSynthKarplusStrongMod  stringArray[MAX_STRINGS];
-#else
-AudioSynthKarplusStrong  stringArray[MAX_STRINGS];
-#endif
+
 AudioMixer4              mixer[4];
 AudioMixer4              sumMix;
 
@@ -41,64 +37,68 @@ AudioConnection          patchCordOutLeft(sumMix, 0, audioOut, 0);
 AudioConnection          patchCordOutRight(sumMix, 0, audioOut, 1);
 
 
-#ifdef KP_MOD
 void setDecayVal(uint16_t modValue)
 {
-  uint16_t value = 25000 + ((modValue) << 6) ; //need an offset, otherwise too severe
-  for (int i = 0; i < MAX_STRINGS; i++)
+  int32_t value = 30700 + ((modValue) << 4) ; //need an offset, otherwise too severe
+  for (int i = 0; i < MAX_STRINGS-1; i++)
   {
     stringArray[i].setDecayTime(value);
   }
-  Serial.println(value);
   return;
 }
-#endif
+
+void setPitchBend(int pitchBend)
+{
+  float pitchFloat = ((float)pitchBend) * PITCHBEND_RANGE;
+  float pitchResult = powf(2.0, pitchFloat);
+
+  for (int i = 0; i < MAX_STRINGS-1; i++)
+  {
+    stringArray[i].setPitchBend(pitchResult);
+
+  }
+  return;
+}
 
 void stringsSetup()
 {
   for (int i; i < 4; i++)
   {
     mixer[i].gain(i, 0.13f);
-    sumMix.gain(i, .1f);
+    sumMix.gain(i, .25f);
   }
-#ifdef KP_MOD
-  setDecayVal(90);
-#endif
+  for (int j; j < MAX_STRINGS-1; j++)
+  {
+      stringArray[j].noteOn(69, 0);
+  }
+  setDecayVal(127);
+  setPitchBend(0);
+
 }
 
-void stringPlayer(int pitch, uint16_t velIn)
+void stringPlayer(uint16_t midiNote, uint16_t velIn)
 {
-
-#ifdef KP_MOD
-  uint16_t velocity = (velIn + 1) << 9;
-#else
-  float velocity = ((float)(velIn)) / 128.0;
-#endif
-  if (pitch == oldPitch)
+  float note = MidiNotesHZ[midiNote];
+  uint16_t velocity = velIn<<9;
+  if (midiNote == oldNote)
   {
-    strings = oldStrings;
+    stringArray[oldStrings].noteOn(note, velocity);
   }
   else
   {
     if (strings >= MAX_STRINGS - 1)
     {
+
+      stringArray[0].noteOn(note, velocity);
       strings = 0;
     }
     else
     {
-      ++strings;
+      stringArray[++strings].noteOn(note, velocity);
     }
   }
-  stringArray[strings].noteOn(MidiNotesHZ[pitch], velocity);
-  oldStrings = strings;
-  oldPitch = pitch;
 
-  Serial.print(pitch);
-  Serial.print(" string# ");
-  Serial.println(strings);
-  Serial.print("Velocity ");
-  Serial.print(velocity);
-  Serial.println(" ");
+  oldStrings = strings;
 
   return;
 }

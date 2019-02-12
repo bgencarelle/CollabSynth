@@ -18,25 +18,27 @@
 
 //this part can be done as a CC as well
 void handleNoteOn(byte channel, byte pitch, byte velocity)
-{ 
-  
-  if (1) 
+{
+  if (1)
   {
-    
-    stringPlayer(pitch, velocity);    
-  }
 
+    stringPlayer(pitch, velocity);
   }
+}
 
 
 void handleNoteOff(byte channel, byte pitch, byte velocity)
-{ 
+{
 }
 void handleProgramChange(byte channel, byte number)//sends program change-"SCENES"
 {
 }
 void handlePitchBend(byte channel, int bend)
 {
+  if (1)
+  {
+    setPitchBend(bend);
+  }
 }
 //void handleStart()//using CCs for now to simplify
 //{
@@ -53,22 +55,17 @@ void handlePitchBend(byte channel, int bend)
 ////All commands are CC for simplicity sake
 
 void handleControlChange(byte channel, byte number, byte value)
-  {
+{
   byte lastNumber;//tracks last valid CC
   byte lastValue;//tracks last valid value
   if (channel == CC_CHANNEL)
   {
-    
+
     switch (number) {//reassign CCs as needed for your application
       //transport controls
       case ModCC://modulation Controller
-        {
-          #ifdef KP_MOD
-          setDecayVal(value); 
-          #endif
-        }
-        
-      break;
+          setDecayVal(value);
+        break;
       default:
         lastNumber = number;
         lastValue = value;
@@ -81,7 +78,7 @@ void handleControlChange(byte channel, byte number, byte value)
 
 void midiSetup() {
   //Midi section//
-  
+
   midiB.begin(MIDI_CHANNEL_OMNI);
   midiB.setHandleNoteOn(handleNoteOn);  // Put only the name of the function
   midiB.setHandleNoteOff(handleNoteOff);
