@@ -1,12 +1,9 @@
 #define MAX_STRINGS 12
 #define PITCHBEND_RANGE -(1.0/8192.0)  //should be 8192 >> or << by no more than say 5
-#include "chords.h"
+#include "chords.h" //was in original example, might be useful
 
 // Special thanks to Matthew Rahtz - http://amid.fish/karplus-strong/
-int oldNote = 40;
-uint8_t oldStrings = 0;
-int oldmodValue = 127;
-uint8_t strings = 0;
+
 AudioSynthKarplusStrongMod  stringArray[MAX_STRINGS];
 
 AudioMixer4              mixer[4];
@@ -35,8 +32,8 @@ AudioConnection          patchCordSubMix3(mixer[3], 0, sumMix, 3);
 AudioConnection          patchCordOutLeft(sumMix, 0, audioOut, 0);
 AudioConnection          patchCordOutRight(sumMix, 0, audioOut, 1);
 
-void scalerSetup()
-{
+void scalerSetup()//might be a better way to do this, but right now it is useful to be able to do it this way
+{// each octave gets a different scaler. This scaler is also used in the actual string synth
   for (int i = 0; i <= 11; i++)
   {
     scalerMidiNote[i] = 1<<5;
@@ -90,24 +87,23 @@ void scalerSetup()
   
 }
 
-void setDecayVal(uint16_t modValue)
+void setDecayVal(uint16_t modValue)// this sets the decay time of the strings. It is currently mapped to the mod wheel, but is technically actually a sustain
 {
-  int32_t value = 30700 + ((modValue) << 4) ; //need an offset, otherwise too severe
+  int32_t value = 30740 + ((modValue) << 4) ; //need an offset, otherwise too severe
 
-  stringArray[0].setDecayTime(value);
+  stringArray[0].setDecayTime(value);//it is currently static, but could actually be implemented differently on individual strings
   return;
 }
 
-void setPitchBend(int pitchBend)
+void setPitchBend(int pitchBend)//pitchbend - currently is not optimal on bend down during decay
 {
   float pitchFloat = ((float)pitchBend) * PITCHBEND_RANGE;
   float pitchResult = exp2f(pitchFloat);
-
   stringArray[0].setPitchBend(pitchResult);
   return;
 }
 
-void stringsSetup()
+void stringsSetup()//initial setup
 {
   scalerSetup();
   for (int i = 0; i < 4; i++)
@@ -121,34 +117,22 @@ void stringsSetup()
     }
   setDecayVal(127);
   setPitchBend(0);
-
+  return;
 }
 
-void stringPlayer(uint16_t midiNote, uint16_t velIn)
+void stringPlayer(uint16_t midiNote, uint16_t velIn)//two parameters from the midi section.  
 {
-  float note = midiNotesScaled[midiNote];
   uint16_t velocity = velIn << 9;
-  
-  Serial.println(midiNotesScaled[midiNote]);
-  if (midiNote == oldNote)
-  {
-    stringArray[oldStrings].noteOn(note, velocity, scalerMidiNote[midiNote]);
-  }
-  else
-  {
+  static uint8_t strings;
     if (strings >= MAX_STRINGS - 1)
     {
-
-      stringArray[0].noteOn(note, velocity, scalerMidiNote[midiNote]);
+      stringArray[0].noteOn(midiNotesScaled[midiNote], velocity, scalerMidiNote[midiNote]);
       strings = 0;
     }
     else
     {
-      stringArray[++strings].noteOn(note, velocity, scalerMidiNote[midiNote]);
+      stringArray[strings++].noteOn(midiNotesScaled[midiNote], velocity, scalerMidiNote[midiNote]);
     }
-  }
-
-  oldStrings = strings;
 
   return;
 }

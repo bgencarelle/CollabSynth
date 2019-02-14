@@ -19,7 +19,7 @@
 //this part can be done as a CC as well
 void handleNoteOn(byte channel, byte pitch, byte velocity)
 {
-  if (1)
+  if (1)//no channel set for right now
   {
 
     stringPlayer(pitch, velocity);
