@@ -1,5 +1,5 @@
 #define MAX_STRINGS 12
-#define PITCHBEND_RANGE -(1.0/4096.0)  //should be 8192 >> or << by no more than say 5
+#define PITCHBEND_RANGE -(1.0/8192.0)  //should be 8192 >> or << by no more than say 5
 #include "chords.h"
 
 // Special thanks to Matthew Rahtz - http://amid.fish/karplus-strong/
@@ -40,23 +40,18 @@ AudioConnection          patchCordOutRight(sumMix, 0, audioOut, 1);
 void setDecayVal(uint16_t modValue)
 {
   int32_t value = 30700 + ((modValue) << 4) ; //need an offset, otherwise too severe
-  for (int i = 0; i < MAX_STRINGS-1; i++)
-  {
-    stringArray[i].setDecayTime(value);
-  }
+
+    stringArray[0].setDecayTime(value);
+
   return;
 }
 
 void setPitchBend(int pitchBend)
 {
   float pitchFloat = ((float)pitchBend) * PITCHBEND_RANGE;
-  float pitchResult = powf(2.0, pitchFloat);
+  float pitchResult = exp2f(pitchFloat);
 
-  for (int i = 0; i < MAX_STRINGS-1; i++)
-  {
-    stringArray[i].setPitchBend(pitchResult);
-
-  }
+    stringArray[0].setPitchBend(pitchResult);
   return;
 }
 
