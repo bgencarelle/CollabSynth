@@ -76,12 +76,12 @@ void scalerSetup()//might be a better way to do this, but right now it is useful
   }
     for (int i = 96; i <= 107; i++)
   {
-    scalerMidiNote[i] = 1;
+    scalerMidiNote[i] = 1<<0;
     midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
   }
     for (int i = 108; i <= 127; i++)
   {
-    scalerMidiNote[i] = 1;
+    scalerMidiNote[i] = 1<<0;
     midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
   }
   
@@ -126,12 +126,13 @@ void stringPlayer(uint16_t midiNote, uint16_t velIn)//two parameters from the mi
   static uint8_t strings;
     if (strings >= MAX_STRINGS - 1)
     {
-      stringArray[0].noteOn(midiNotesScaled[midiNote], velocity, scalerMidiNote[midiNote]);
+      stringArray[0].noteOff();
+      stringArray[0].noteOn(midiNotesScaled[midiNote], velocity, scalerMidiNote[midiNote],strings);
       strings = 0;
     }
     else
     {
-      stringArray[strings++].noteOn(midiNotesScaled[midiNote], velocity, scalerMidiNote[midiNote]);
+      stringArray[strings++].noteOn(midiNotesScaled[midiNote], velocity, scalerMidiNote[midiNote],strings);
     }
 
   return;
