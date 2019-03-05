@@ -58,7 +58,7 @@ void handleControlChange(byte channel, byte number, byte value)
 {
   byte lastNumber;//tracks last valid CC
   byte lastValue;//tracks last valid value
-  if (channel == CC_CHANNEL)
+ // if (channel == CC_CHANNEL)
   {
 
     switch (number) {//reassign CCs as needed for your application

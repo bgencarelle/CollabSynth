@@ -89,8 +89,8 @@ void scalerSetup()//might be a better way to do this, but right now it is useful
 
 void setDecayVal(uint16_t modValue)// this sets the decay time of the strings. It is currently mapped to the mod wheel, but is technically actually a sustain
 {
-  int32_t value = 32270 + ((modValue) << 2) ; //need an offset, otherwise too severe
-
+  int32_t value = 32260 + ((modValue) << 2) ; //need an offset, otherwise too severe
+  Serial.println(value);
   stringArray[0].setDecayTime(value);//it is currently static, but could actually be implemented differently on individual strings
   return;
 }
