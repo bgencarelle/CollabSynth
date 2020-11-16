@@ -24,21 +24,19 @@
  * THE SOFTWARE.
  */
  #include "synth_karplusstrongMod.h"
+// This function waits for the next random number (signified by a change to rNum) and returns it
+volatile uint32_t rNum;  
 
+// This interrupt handler is called when a new random number is available; it reads the random number and clears the interrupt
+void TRNG_Handler()                            // Called when TRNG data is available
+{
+    rNum = TRNG->DATA.reg;                     // Read & store the TRNG data output
+    TRNG->INTFLAG.bit.DATARDY = 1;             // Clear the DATA READY interrupt flag
+}
  int32_t AudioSynthKarplusStrongMod::decayTime;
  float AudioSynthKarplusStrongMod::globalPitch;
  int32_t   AudioSynthKarplusStrongMod::magnitude[STRINGS];
- static inline uint32_t pseudorand(uint32_t lo)
- {
-   uint32_t hi;
-  hi = multiply_16bx16t(16807, lo); // 16807 * (lo >> 16)
-  lo = 16807 * (lo & 0xFFFF);
-  lo += (hi & 0x7FFF) << 16;
-  lo += hi >> 15;
-  lo = (lo & 0x7FFFFFFF) + (lo >> 31);
 
-  return lo;
- }
  void AudioSynthKarplusStrongMod::setPitchBend(float pitch)
  {
 
@@ -92,12 +90,12 @@
   if (state == 0) return;
 
   if (state == 1) {
-    uint32_t lo = seed;
+    TRNG_Handler();
     for (int i=0; i < MAX_BUFF; i++) {
-      lo = pseudorand(lo);
-      buffer[i] = signed_multiply_32x16b(magnitude[string], lo);
+      TRNG_Handler();
+      buffer[i] = signed_multiply_32x16b(magnitude[string], rNum);
     }
-    seed = lo;
+    seed = rNum;
     state = 2;
   }
   if (state == 2)
