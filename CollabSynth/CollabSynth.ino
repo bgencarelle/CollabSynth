@@ -31,7 +31,7 @@ MIDI_CREATE_INSTANCE(HardwareSerial, MIDI_SERIAL, midiB);//creates the hardware 
 void setup()
 {
 
-  trngInit();
+
   double a = A440;//this is tuning standard
   for (int x = 0; x < 127; x++)
   {
@@ -43,9 +43,9 @@ void setup()
   AudioMemory(40);//allocate AudioMemory according to some magical thinking-
   Serial.begin(9600);//because lacking debugger
   Serial.println("Begin");
+  
   stringsSetup();//creates the strings
   midiSetup();//creates midi
-  
   delay(700);//settling time? this came with the example
 }
 

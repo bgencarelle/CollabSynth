@@ -1,46 +1,58 @@
 /* Audio Library for Teensy 3.X
- * Copyright (c) 2016, Paul Stoffregen, paul@pjrc.com
- *
- * Development of this audio library was funded by PJRC.COM, LLC by sales of
- * Teensy and Audio Adaptor boards.  Please support PJRC's efforts to develop
- * open source software by purchasing Teensy or other PJRC products.
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice, development funding notice, and this permission
- * notice shall be included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
- #include "synth_karplusstrongMod.h"
+   Copyright (c) 2016, Paul Stoffregen, paul@pjrc.com
 
-volatile uint32_t randomNum =1;  
+   Development of this audio library was funded by PJRC.COM, LLC by sales of
+   Teensy and Audio Adaptor boards.  Please support PJRC's efforts to develop
+   open source software by purchasing Teensy or other PJRC products.
 
-volatile uint32_t seed = 1;
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
 
-// This function waits for the next random number (signified by a change to rNum) and returns it
+   The above copyright notice, development funding notice, and this permission
+   notice shall be included in all copies or substantial portions of the Software.
 
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*/
+#include "synth_karplusstrongMod.h"
+
+volatile uint32_t randomNum = 1;
+boolean startup = 1;
+
+void trngSetup(void) //setup RNG for SAMD51
+{
+
+  MCLK->APBCMASK.reg |= MCLK_APBCMASK_TRNG;    // Activate the CLK_TRNG_APB clock
+  NVIC_SetPriority(TRNG_IRQn, 0);              // Set NVIC priority for TRNG to 0
+  NVIC_EnableIRQ(TRNG_IRQn);                   // Connect TRNG to NVIC
+  TRNG->INTENCLR.reg = TRNG_INTENCLR_DATARDY;  // Disable the TRNG interrupt
+  TRNG->CTRLA.reg = TRNG_CTRLA_ENABLE;         // Enable the TRNG peripheral
+}
 // This interrupt handler is called when a new random number is available; it reads the random number and clears the interrupt
 void randGen()                            // Called when TRNG data is available
 {
- #if defined(__SAMD51__)
-    randomNum = TRNG->DATA.reg;                     // Read & store the TRNG data output
-    TRNG->INTFLAG.bit.DATARDY = 1;             // Clear the DATA READY interrupt flag
+#if defined(__SAMD51__)
+  if (startup == 1)
+  {
+    trngSetup();
+    startup = 0;
+    delayMicroseconds(100);
+  }
 
+  randomNum = TRNG->DATA.reg;                     // Read & store the TRNG data output
+  TRNG->INTFLAG.bit.DATARDY = 1;             // Clear the DATA READY interrupt flag
 #else
-  uint32_t hi; 
-  hi = multiply_16bx16t(16807, randomNum); // 16807 * (randomNum >> 16) 
+  uint32_t hi;
+  hi = multiply_16bx16t(16807, randomNum); // 16807 * (randomNum >> 16)
   randomNum = 16807 * (randomNum & 0xFFFF); 
   randomNum += (hi & 0x7FFF) << 16; 
   randomNum += hi >> 15; 

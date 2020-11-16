@@ -32,6 +32,10 @@
 #define MAX_BUFF 1000
 #define STRINGS 12
 
+
+
+
+
 class AudioSynthKarplusStrongMod : public AudioStream
 {
 public:
