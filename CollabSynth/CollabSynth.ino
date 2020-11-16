@@ -4,6 +4,7 @@
 */
 #include <MIDI.h>
 #include <Audio.h>
+ #include "synth_karplusstrongMod.h"
 #include <Wire.h>
 #define MIDI_SERIAL Serial1
 #define A440 440.0
@@ -40,4 +41,11 @@ void setup()
 void loop()
 {
   midiB.read();//this is the only thing in our loop
+  for (int x = 0; x < 127; x++)
+  {
+    delayMicroseconds(10000);
+    
+     stringPlayer(x, 127);
+  }
+   // Serial.println("Begin");
 }
