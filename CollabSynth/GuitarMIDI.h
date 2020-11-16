@@ -32,6 +32,21 @@ AudioConnection          patchCordSubMix3(mixer[3], 0, sumMix, 3);
 AudioConnection          patchCordOutLeft(sumMix, 0, audioOut, 0);
 AudioConnection          patchCordOutRight(sumMix, 0, audioOut, 1);
 
+
+void trngInit(void) //setup RNG
+
+{
+  #if defined(__SAMD51__)
+  MCLK->APBCMASK.reg |= MCLK_APBCMASK_TRNG;    // Activate the CLK_TRNG_APB clock
+  NVIC_SetPriority(TRNG_IRQn, 0);              // Set NVIC priority for TRNG to 0 
+  NVIC_EnableIRQ(TRNG_IRQn);                   // Connect TRNG to NVIC 
+  TRNG->INTENCLR.reg = TRNG_INTENCLR_DATARDY;  // Disable the TRNG interrupt
+  TRNG->CTRLA.reg = TRNG_CTRLA_ENABLE;         // Enable the TRNG peripheral
+#elif
+#endif
+}
+
+
 void scalerSetup()//might be a better way to do this, but right now it is useful to be able to do it this way
 {// each octave gets a different scaler. This scaler is also used in the actual string synth
   for (int i = 0; i <= 11; i++)

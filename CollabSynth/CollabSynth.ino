@@ -30,12 +30,8 @@ MIDI_CREATE_INSTANCE(HardwareSerial, MIDI_SERIAL, midiB);//creates the hardware 
 
 void setup()
 {
-  MCLK->APBCMASK.reg |= MCLK_APBCMASK_TRNG;    // Activate the CLK_TRNG_APB clock
-  NVIC_SetPriority(TRNG_IRQn, 0);              // Set NVIC priority for TRNG to 0 
-  NVIC_EnableIRQ(TRNG_IRQn);                   // Connect TRNG to NVIC 
-  TRNG->INTENCLR.reg = TRNG_INTENCLR_DATARDY;  // Disable the TRNG interrupt
-  TRNG->CTRLA.reg = TRNG_CTRLA_ENABLE;         // Enable the TRNG peripheral  
-  
+
+  trngInit();
   double a = A440;//this is tuning standard
   for (int x = 0; x < 127; x++)
   {

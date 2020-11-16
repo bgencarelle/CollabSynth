@@ -24,14 +24,31 @@
  * THE SOFTWARE.
  */
  #include "synth_karplusstrongMod.h"
+
+volatile uint32_t randomNum =1;  
+
+volatile uint32_t seed = 1;
+
 // This function waits for the next random number (signified by a change to rNum) and returns it
-volatile uint32_t rNum;  
 
 // This interrupt handler is called when a new random number is available; it reads the random number and clears the interrupt
-void TRNG_Handler()                            // Called when TRNG data is available
+void randGen()                            // Called when TRNG data is available
 {
-    rNum = TRNG->DATA.reg;                     // Read & store the TRNG data output
+ #if defined(__SAMD51__)
+    randomNum = TRNG->DATA.reg;                     // Read & store the TRNG data output
     TRNG->INTFLAG.bit.DATARDY = 1;             // Clear the DATA READY interrupt flag
+
+#else
+  uint32_t hi; 
+  hi = multiply_16bx16t(16807, randomNum); // 16807 * (randomNum >> 16) 
+  randomNum = 16807 * (randomNum & 0xFFFF); 
+  randomNum += (hi & 0x7FFF) << 16; 
+  randomNum += hi >> 15; 
+  randomNum = (randomNum & 0x7FFFFFFF) + (randomNum >> 31); 
+
+ 
+#endif
+
 }
  int32_t AudioSynthKarplusStrongMod::decayTime;
  float AudioSynthKarplusStrongMod::globalPitch;
@@ -90,12 +107,12 @@ void TRNG_Handler()                            // Called when TRNG data is avail
   if (state == 0) return;
 
   if (state == 1) {
-    TRNG_Handler();
+    randGen();
     for (int i=0; i < MAX_BUFF; i++) {
-      TRNG_Handler();
-      buffer[i] = signed_multiply_32x16b(magnitude[string], rNum);
+      randGen();
+      buffer[i] = signed_multiply_32x16b(magnitude[string], randomNum);
     }
-    seed = rNum;
+   // seed = randomNum;
     state = 2;
   }
   if (state == 2)
@@ -138,6 +155,3 @@ if (++bufferIndex >= bufferLenPitch) bufferIndex = 0;
   release(block);
  }
  }
-
-
- uint32_t AudioSynthKarplusStrongMod::seed = 1;
