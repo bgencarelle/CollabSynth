@@ -17,9 +17,9 @@
 
 double MidiNotesDelay[128];//stores the size of the memory block for the strings
 double MidiNotesFreq[128]; //frequency calculation for MIDI
-uint16_t scalerMidiNote[128] = {0};//this scales the delay blocks to minimize memory
+uint8_t scalerMidiNote[128] = {0};//this scales the delay blocks to minimize memory
 double midiNotesScaled[128]= {0}; //result
-char noteTest = 44;
+char noteTest = 0;
 
 AudioOutputAnalogStereo  audioOut;
 
@@ -46,7 +46,7 @@ void setup()
   
   stringsSetup();//creates the strings
   midiSetup();//creates midi
-  delay(700);//settling time? this came with the example
+  delayMicroseconds(700000);//settling time? this came with the example
 }
 
 void loop()
@@ -57,9 +57,7 @@ void loop()
        {
         noteTest =44;
        }
-    delayMicroseconds(1000000);
+    delayMicroseconds(2000000);
     
      stringPlayer(60, 127);
-
-    Serial.println(MidiNotesFreq[60],DEC);
 }

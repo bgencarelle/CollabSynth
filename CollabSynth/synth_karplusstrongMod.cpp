@@ -25,8 +25,8 @@
 */
 #include "synth_karplusstrongMod.h"
 
-volatile uint32_t randomNum = 1;
-volatile uint32_t randomCheck = 1;
+volatile int32_t randomNum = 1;
+volatile int32_t randomCheck = 1;
 boolean startup = 1;
 
 void trngSetup(void) //setup RNG for SAMD51
@@ -70,10 +70,10 @@ void randGen()                            // Called when TRNG data is available
 
 }
  int32_t AudioSynthKarplusStrongMod::decayTime;
- float AudioSynthKarplusStrongMod::globalPitch;
+ double AudioSynthKarplusStrongMod::globalPitch;
  int32_t   AudioSynthKarplusStrongMod::magnitude;
 
- void AudioSynthKarplusStrongMod::setPitchBend(float pitch)
+ void AudioSynthKarplusStrongMod::setPitchBend(double pitch)
  {
 
    if (pitch <0.125 )
@@ -89,7 +89,7 @@ void randGen()                            // Called when TRNG data is available
      globalPitch = pitch;
    }
  }
- void AudioSynthKarplusStrongMod::setDecayTime(uint16_t decay)
+ void AudioSynthKarplusStrongMod::setDecayTime(uint32_t decay)
  {
    if (decay >=32767)
    {
@@ -106,7 +106,7 @@ void randGen()                            // Called when TRNG data is available
  }
  void AudioSynthKarplusStrongMod::checkLength(void)
  {
-   uint16_t testSize = bufferLen * globalPitch;
+   uint32_t testSize = bufferLen * globalPitch;
    if (testSize <= 5)
    {
      bufferLenPitch = 5;
@@ -126,10 +126,10 @@ void randGen()                            // Called when TRNG data is available
   if (state == 0) return;
 
   if (state == 1) {
-    randGen();
-    for (int i=0; i < MAX_BUFF; i++) {
+    for (int i=0; i < MAX_BUFF-2; i++) {
       randGen();
-      buffer[i] = signed_multiply_32x16b(magnitude, randomNum);
+      int32_t volumeScale = (randomNum/(magnitude));
+      buffer[i] = (volumeScale);
     }
    // seed = randomNum;
     state = 2;
@@ -137,12 +137,13 @@ void randGen()                            // Called when TRNG data is available
   if (state == 2)
   {
   block = allocate();
-  if (!block) {
+  if (!block) 
+  {
     state = 0;
     return;
   }
 
-  int16_t prior;
+  int32_t prior;
   if (bufferIndex > 0) {
     prior = buffer[bufferIndex - 1];
   } else {
@@ -153,19 +154,19 @@ void randGen()                            // Called when TRNG data is available
  checkLength();
   for (int i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
 
-        int16_t in = buffer[bufferIndex];
-        int32_t  avg = (in +prior);
-        int16_t out = signed_multiply_32x16b(avg, decayTime);
-    int16_t compare = i%(globalScaler<<1);
+        int32_t in = buffer[bufferIndex];
+        int32_t  avg = (in +prior)>>1;
+        int32_t out = (avg*decayTime)>>15;
+    uint32_t compare = i%(globalScaler<<1);
     prior = in;
 
     buffer[bufferIndex] = out;
    // if (compare ==0)
     {
-        if (++bufferIndex >= bufferLenPitch) bufferIndex = 0;
+        if (++bufferIndex >= bufferLenPitch-1) bufferIndex = 0;
     }
 
-  *data++ = out;
+  *data++ = (out);
   }
 
   transmit(block);

@@ -40,48 +40,48 @@ class AudioSynthKarplusStrongMod : public AudioStream
 public:
 
   static  int32_t decayTime;
-  static float globalPitch;
-  uint16_t bufferLen;
-  uint16_t bufferLenPitch;
+  static double globalPitch;
+  uint32_t bufferLen;
+  uint32_t bufferLenPitch;
   int32_t static  magnitude; // current output
   AudioSynthKarplusStrongMod() : AudioStream(0, NULL) {
     state = 0;
   }
-  void noteOn(uint16_t len=440, int32_t velocity = 65535, uint16_t scaler = 1)
+  void noteOn(uint32_t len=440, uint16_t velocity = 65535, uint32_t scaler = 1)
   {
     globalScaler = scaler;
-
-    if (velocity > 65000)
-    {
-      magnitude = 65535;
-    } else if (velocity <= 0)
-    {
-      noteOff(0);
-    } else
-     {
-      magnitude = velocity;
-    }
-    if (len > MAX_BUFF) len = MAX_BUFF;//for pitch shifting
+        if (len > MAX_BUFF-1) len = MAX_BUFF-1;//for pitch shifting
     bufferLen = len;
     bufferIndex = 0;
+    if (velocity >=512)
+    {
+      magnitude = 65536-(int32_t)velocity;
+      Serial.println(magnitude,DEC);
+    } else 
+    {
+      noteOff();
+      return;
+    } 
+
     state = 1;
+    return;
   }
 
-  void noteOff(float velocity=0) {
+  void noteOff() {
     state = 0;
+    return;
   }
-  static void setPitchBend(float pitch = 1.0);
-  static void setDecayTime(uint16_t decay = 32767);
+  static void setPitchBend(double pitch = 1.0);
+  static void setDecayTime(uint32_t decay = 32767);
   void inline checkLength(void);
   virtual void update(void);
 private:
   uint8_t  state;     // 0=steady output, 1=begin on next update, 2=playing
-  uint16_t bufferIndex;
+  uint32_t bufferIndex;
 
-  uint8_t string;
   static uint32_t seed;  // must start at 1
-  int16_t buffer[MAX_BUFF]; // TODO: dynamically use audio memory blocks
-  uint16_t globalScaler;
+  int32_t buffer[MAX_BUFF]; // TODO: dynamically use audio memory blocks
+  uint32_t globalScaler;
 };
 
 #endif

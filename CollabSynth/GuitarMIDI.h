@@ -90,19 +90,24 @@ void scalerSetup()//might be a better way to do this, but right now it is useful
   
 }
 
-void setDecayVal(uint16_t modValue)// this sets the decay time of the strings. It is currently mapped to the mod wheel, but is technically actually a sustain
+void setDecayVal(uint32_t modValue)// this sets the decay time of the strings. It is currently mapped to the mod wheel, but is technically actually a sustain
 {
   int32_t value = 32260 + ((modValue) << 2) ; //need an offset, otherwise too severe
-  Serial.println(value);
-  stringArray[0].setDecayTime(value);//it is currently static, but could actually be implemented differently on individual strings
+  for (int i = 0; i <MAX_STRINGS -1; i++)
+  {
+  stringArray[i].setDecayTime(value);//it is currently static, but could actually be implemented differently on individual strings
+  }
   return;
 }
 
 void setPitchBend(int pitchBend)//pitchbend - currently is not optimal on bend down during decay
 {
-  float pitchFloat = ((float)pitchBend) * PITCHBEND_RANGE;
-  float pitchResult = exp2f(pitchFloat);
-  stringArray[0].setPitchBend(pitchResult);
+  double pitchDouble = ((double)pitchBend) * PITCHBEND_RANGE;
+  double pitchResult = exp2f(pitchDouble);
+    for (int i = 0; i <MAX_STRINGS -1; i++)
+  {
+  stringArray[i].setPitchBend(pitchResult);
+  }
   return;
 }
 
@@ -115,28 +120,22 @@ void stringsSetup()//initial setup
     mixer[i].gain(i, stringScaler);
     sumMix.gain(i,.01);
   }
-  for (int i=0; i<MAX_STRINGS-1; i++)
-    {
-      stringArray[i].noteOn(69, i, 0);
-    }
+
   setDecayVal(127);
   setPitchBend(0);
   return;
 }
 
-void stringPlayer(uint16_t midiNote, uint16_t velIn)//two parameters from the midi section.  
+void stringPlayer(uint8_t midiNote, uint8_t velIn)//two parameters from the midi section.  
 {
-  uint16_t velocity = velIn << 9;
+  uint32_t velocity = (velIn << 9) +511;
   static uint8_t strings;
-    if (strings >= MAX_STRINGS - 1)
+    if (strings > MAX_STRINGS - 1)
     {
       strings = 0;
     }
-    else
-    {
-      //stringArray[strings].noteOff();
+      Serial.println(strings,DEC);
       stringArray[strings++].noteOn(midiNotesScaled[midiNote], velocity, scalerMidiNote[midiNote]);
-    }
+return;
 
-  return;
 }
