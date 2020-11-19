@@ -1,6 +1,7 @@
 #define MAX_STRINGS 12
+#define MIXER_COUNT MAX_STRINGS>>2 // 1 mixer for every 4 voices
 #define PITCHBEND_RANGE -(1.0/8192.0)  //should be 8192 >> or << by no more than say 5
-#include "chords.h" //was in original example, might be useful
+
 
 // Special thanks to Matthew Rahtz - http://amid.fish/karplus-strong/
 
@@ -13,21 +14,21 @@ AudioConnection          patchCord0(stringArray[0], 0, mixer[0], 0);
 AudioConnection          patchCord1(stringArray[1], 0, mixer[0], 1);
 AudioConnection          patchCord2(stringArray[2], 0, mixer[0], 2);
 AudioConnection          patchCord3(stringArray[3], 0, mixer[0], 3);
-
+AudioConnection          patchCordSubMix0(mixer[0], 0, sumMix, 0);
+#if (MIXER_COUNT > 2)
 AudioConnection          patchCord4(stringArray[4], 0, mixer[1], 0);
 AudioConnection          patchCord5(stringArray[5], 0, mixer[1], 1);
 AudioConnection          patchCord6(stringArray[6], 0, mixer[1], 2);
 AudioConnection          patchCord7(stringArray[7], 0, mixer[1], 3);
-
+AudioConnection          patchCordSubMix1(mixer[1], 0, sumMix, 1);
+#endif
+#if (MIXER_COUNT > 3)
 AudioConnection          patchCord8(stringArray[8], 0, mixer[2], 0);
 AudioConnection          patchCord9(stringArray[9], 0, mixer[2], 1);
 AudioConnection          patchCord10(stringArray[10], 0, mixer[2], 2);
 AudioConnection          patchCord11(stringArray[11], 0, mixer[2], 3);
-
-AudioConnection          patchCordSubMix0(mixer[0], 0, sumMix, 0);
-AudioConnection          patchCordSubMix1(mixer[1], 0, sumMix, 1);
 AudioConnection          patchCordSubMix2(mixer[2], 0, sumMix, 2);
-AudioConnection          patchCordSubMix3(mixer[3], 0, sumMix, 3);
+#endif
 
 AudioConnection          patchCordOutLeft(sumMix, 0, audioOut, 0);
 AudioConnection          patchCordOutRight(sumMix, 0, audioOut, 1);
@@ -108,10 +109,11 @@ void setPitchBend(int pitchBend)//pitchbend - currently is not optimal on bend d
 void stringsSetup()//initial setup
 {
   scalerSetup();
-  for (int i = 0; i < 4; i++)
+  double stringScaler =  1.0/(double)MAX_STRINGS;
+  for (int i = 0; i < MIXER_COUNT; i++)
   {
-    mixer[i].gain(i, 0.13f);
-    sumMix.gain(i, .25f);
+    mixer[i].gain(i, stringScaler);
+    sumMix.gain(i,.01);
   }
   for (int i=0; i<MAX_STRINGS-1; i++)
     {
@@ -128,13 +130,12 @@ void stringPlayer(uint16_t midiNote, uint16_t velIn)//two parameters from the mi
   static uint8_t strings;
     if (strings >= MAX_STRINGS - 1)
     {
-      stringArray[0].noteOff();
-      stringArray[0].noteOn(midiNotesScaled[midiNote], velocity, scalerMidiNote[midiNote],strings);
       strings = 0;
     }
     else
     {
-      stringArray[strings++].noteOn(midiNotesScaled[midiNote], velocity, scalerMidiNote[midiNote],strings);
+      //stringArray[strings].noteOff();
+      stringArray[strings++].noteOn(midiNotesScaled[midiNote], velocity, scalerMidiNote[midiNote]);
     }
 
   return;

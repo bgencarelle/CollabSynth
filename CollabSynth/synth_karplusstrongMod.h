@@ -30,7 +30,6 @@
 #include "AudioStream.h"
 #include "utility/dspinst.h"
 #define MAX_BUFF 1000
-#define STRINGS 12
 
 
 
@@ -44,30 +43,23 @@ public:
   static float globalPitch;
   uint16_t bufferLen;
   uint16_t bufferLenPitch;
-  int32_t static  magnitude[STRINGS]; // current output
+  int32_t static  magnitude; // current output
   AudioSynthKarplusStrongMod() : AudioStream(0, NULL) {
     state = 0;
   }
-  void noteOn(uint16_t len=440, int32_t velocity = 65535, uint16_t scaler = 1, uint8_t stringInst=0)
+  void noteOn(uint16_t len=440, int32_t velocity = 65535, uint16_t scaler = 1)
   {
     globalScaler = scaler;
-    if (stringInst >= STRINGS-1)
-    {
-      string = 0;
-    }
-    else
-    {
-      string = stringInst;
-    }
+
     if (velocity > 65000)
     {
-      magnitude[string] = 65535;
+      magnitude = 65535;
     } else if (velocity <= 0)
     {
       noteOff(0);
     } else
      {
-      magnitude[string] = velocity;
+      magnitude = velocity;
     }
     if (len > MAX_BUFF) len = MAX_BUFF;//for pitch shifting
     bufferLen = len;

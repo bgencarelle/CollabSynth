@@ -36,7 +36,7 @@ void setup()
   for (int x = 0; x < 127; x++)
   {
     double xx = x;
-    double freqCalc = a*exp2f((x-69.0)/12.0);
+    double freqCalc = a*exp2f((xx-69.0)/12.0);
     MidiNotesDelay[x] = (AUDIO_SAMPLE_RATE_EXACT/freqCalc);
     MidiNotesFreq[x] = freqCalc;
   }
@@ -59,12 +59,7 @@ void loop()
        }
     delayMicroseconds(1000000);
     
-     stringPlayer(noteTest++, 127);
+     stringPlayer(60, 127);
 
-     stringPlayer(noteTest+3, 127);
-     stringPlayer(noteTest+6, 127);
-     stringPlayer(noteTest+9, 127);
-  
-
-    Serial.println(noteTest,DEC);
+    Serial.println(MidiNotesFreq[60],DEC);
 }

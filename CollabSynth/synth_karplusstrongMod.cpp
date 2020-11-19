@@ -26,16 +26,12 @@
 #include "synth_karplusstrongMod.h"
 
 volatile uint32_t randomNum = 1;
+volatile uint32_t randomCheck = 1;
 boolean startup = 1;
 
 void trngSetup(void) //setup RNG for SAMD51
 {
 
-  MCLK->APBCMASK.reg |= MCLK_APBCMASK_TRNG;    // Activate the CLK_TRNG_APB clock
-  NVIC_SetPriority(TRNG_IRQn, 0);              // Set NVIC priority for TRNG to 0
-  NVIC_EnableIRQ(TRNG_IRQn);                   // Connect TRNG to NVIC
-  TRNG->INTENCLR.reg = TRNG_INTENCLR_DATARDY;  // Disable the TRNG interrupt
-  TRNG->CTRLA.reg = TRNG_CTRLA_ENABLE;         // Enable the TRNG peripheral
 }
 // This interrupt handler is called when a new random number is available; it reads the random number and clears the interrupt
 void randGen()                            // Called when TRNG data is available
@@ -43,13 +39,24 @@ void randGen()                            // Called when TRNG data is available
 #if defined(__SAMD51__)
   if (startup == 1)
   {
-    trngSetup();
+ 
+  MCLK->APBCMASK.reg |= MCLK_APBCMASK_TRNG;    // Activate the CLK_TRNG_APB clock
+  NVIC_SetPriority(TRNG_IRQn, 0);              // Set NVIC priority for TRNG to 0
+  NVIC_EnableIRQ(TRNG_IRQn);                   // Connect TRNG to NVIC
+  TRNG->INTENCLR.reg = TRNG_INTENCLR_DATARDY;  // Disable the TRNG interrupt
+  TRNG->CTRLA.reg = TRNG_CTRLA_ENABLE;         // Enable the TRNG peripheral
     startup = 0;
-    delayMicroseconds(100);
+    delayMicroseconds(10);
   }
-
+  
   randomNum = TRNG->DATA.reg;                     // Read & store the TRNG data output
+  if (randomCheck == randomNum)
+    {
+      delayMicroseconds(1);
+      randGen();
+    }
   TRNG->INTFLAG.bit.DATARDY = 1;             // Clear the DATA READY interrupt flag
+  randomCheck=randomNum;
 #else
   uint32_t hi;
   hi = multiply_16bx16t(16807, randomNum); // 16807 * (randomNum >> 16)
@@ -64,7 +71,7 @@ void randGen()                            // Called when TRNG data is available
 }
  int32_t AudioSynthKarplusStrongMod::decayTime;
  float AudioSynthKarplusStrongMod::globalPitch;
- int32_t   AudioSynthKarplusStrongMod::magnitude[STRINGS];
+ int32_t   AudioSynthKarplusStrongMod::magnitude;
 
  void AudioSynthKarplusStrongMod::setPitchBend(float pitch)
  {
@@ -122,7 +129,7 @@ void randGen()                            // Called when TRNG data is available
     randGen();
     for (int i=0; i < MAX_BUFF; i++) {
       randGen();
-      buffer[i] = signed_multiply_32x16b(magnitude[string], randomNum);
+      buffer[i] = signed_multiply_32x16b(magnitude, randomNum);
     }
    // seed = randomNum;
     state = 2;
@@ -149,16 +156,14 @@ void randGen()                            // Called when TRNG data is available
         int16_t in = buffer[bufferIndex];
         int32_t  avg = (in +prior);
         int16_t out = signed_multiply_32x16b(avg, decayTime);
-    //int16_t out = (in * 32604 + prior * 32604) >> 16;
-  //  int16_t out = (in * 32686 + prior * 32686) >> 16;
-    //int16_t out = (in * 32768 + prior * 32
     int16_t compare = i%(globalScaler<<1);
     prior = in;
 
     buffer[bufferIndex] = out;
-    if (compare ==0){
-if (++bufferIndex >= bufferLenPitch) bufferIndex = 0;
-  }
+   // if (compare ==0)
+    {
+        if (++bufferIndex >= bufferLenPitch) bufferIndex = 0;
+    }
 
   *data++ = out;
   }
