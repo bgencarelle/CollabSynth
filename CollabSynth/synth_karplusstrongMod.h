@@ -30,7 +30,7 @@
 #include "AudioStream.h"
 #include "utility/dspinst.h"
 #define MAX_BUFF 1000
-
+#define AVG_LOOPS 32
 
 
 
@@ -47,9 +47,10 @@ public:
   AudioSynthKarplusStrongMod() : AudioStream(0, NULL) {
     state = 0;
   }
-  void noteOn(uint32_t len=440, uint16_t velocity = 65535, uint32_t scaler = 1)
+  void noteOn(uint32_t len=440, int32_t velocity = 65535, uint32_t octaveDiv = 1)
   {
-    globalScaler = scaler;
+    setDecayTime(decayTime);
+    octaveScaler = octaveDiv;
         if (len > MAX_BUFF-1) len = MAX_BUFF-1;//for pitch shifting
     bufferLen = len;
     bufferIndex = 0;
@@ -68,11 +69,15 @@ public:
   }
 
   void noteOff() {
+    int32_t oldDecay = decayTime;
+    setDecayTime(1);
+    delayMicroseconds(10);
+    setDecayTime(oldDecay);
     state = 0;
     return;
   }
   static void setPitchBend(double pitch = 1.0);
-  static void setDecayTime(uint32_t decay = 32767);
+  static void setDecayTime(int32_t decay = 32767);
   void inline checkLength(void);
   virtual void update(void);
 private:
@@ -81,7 +86,7 @@ private:
 
   static uint32_t seed;  // must start at 1
   volatile int32_t buffer[MAX_BUFF]; // TODO: dynamically use audio memory blocks
-  uint32_t octaveScaler;
+  int32_t octaveScaler;
 };
 
 #endif

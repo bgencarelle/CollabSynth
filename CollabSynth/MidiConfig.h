@@ -5,7 +5,7 @@
 #define AllStop 0x00
 #define RecStrobe 0x01
 #define PlayOn 0x02
-#define FFRew 0x04
+#define FFRew 0x04 
 #define ModCC 0x01
 //record toggle
 

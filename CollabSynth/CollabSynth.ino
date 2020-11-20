@@ -1,6 +1,6 @@
 /*   Initial synth engine for collaborative project.
      3/Feb/2019 Initial commit to Github. Modified Audio libraries to increase sample rate and also fix issues with KP engine
-
+ 
 */
 #define  isFeather 
 
@@ -15,11 +15,11 @@
 #define MIDI_SERIAL Serial1
 #define A440 440.0
 
-double MidiNotesDelay[128];//stores the size of the memory block for the strings
+int32_t MidiNotesDelay[128];//stores the size of the memory block for the strings
 double MidiNotesFreq[128]; //frequency calculation for MIDI
-uint8_t scalerMidiNote[128] = {0};//this scales the delay blocks to minimize memory
-double midiNotesScaled[128]= {0}; //result
-char noteTest = 0;
+uint8_t octaveDivMidiNote[128] = {0};//this scales the delay blocks to minimize memory
+uint32_t midiNotesScaled[128]= {0}; //result
+char noteTest = 60;
 
 AudioOutputAnalogStereo  audioOut;
 
@@ -37,7 +37,7 @@ void setup()
   {
     double xx = x;
     double freqCalc = a*exp2f((xx-69.0)/12.0);
-    MidiNotesDelay[x] = (AUDIO_SAMPLE_RATE_EXACT/freqCalc);
+    MidiNotesDelay[x] = uint32_t(AUDIO_SAMPLE_RATE_EXACT/freqCalc);
     MidiNotesFreq[x] = freqCalc;
   }
   AudioMemory(40);//allocate AudioMemory according to some magical thinking-
@@ -52,12 +52,39 @@ void setup()
 void loop()
 {
   //midiB.read();//this is the only thing in our loop
+  noteTest=60;
+//  
+//    if((noteTest+12) > 127)
+//    {
+//      noteTest=0;
+//    }
+//    else 
+//    {
+//      noteTest=noteTest+12;
+//    }
 
-       if (noteTest >=128) 
-       {
-        noteTest =44;
-       }
-    delayMicroseconds(2000000);
+     Serial.print("VARIANT_GCLK2_FREQ:  ");
+     Serial.println(VARIANT_GCLK2_FREQ/1000000,DEC);
+     Serial.print("MHZ");
+     Serial.print("TC_CTRLA_PRESCALER_DIV2 ");
+     Serial.println(TC_CTRLA_PRESCALER_DIV2,DEC);  
+     Serial.print("TC_CTRLA_PRESCALER_DIV4 ");
+     Serial.println(TC_CTRLA_PRESCALER_DIV4,DEC);  
+     Serial.print("TC_CTRLA_PRESCALER_DIV8 ");
+     Serial.println(TC_CTRLA_PRESCALER_DIV8,DEC);  
+     Serial.print("TC_CTRLA_PRESCALER_DIV16 ");
+     Serial.println(TC_CTRLA_PRESCALER_DIV16,DEC);
+     
+     Serial.print("CALCULATED RECONSTRUCTION "); 
+     double calcFreq=MidiNotesFreq[noteTest]*MidiNotesDelay[noteTest];
+     Serial.println(calcFreq, DEC);
+     Serial.print("error percentage:");
+     double errorPercentage = ((fabs(AUDIO_SAMPLE_RATE_EXACT-calcFreq)/AUDIO_SAMPLE_RATE_EXACT)*100.000);
+     Serial.println(errorPercentage);
+     stringPlayer(noteTest, 127);
+
+
+     
+    delayMicroseconds(5000000);
     
-     stringPlayer(60, 127);
 }

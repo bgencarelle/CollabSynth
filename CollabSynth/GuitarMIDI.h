@@ -2,7 +2,7 @@
 #define MIXER_COUNT MAX_STRINGS>>2 // 1 mixer for every 4 voices
 #define PITCHBEND_RANGE -(1.0/8192.0)  //should be 8192 >> or << by no more than say 5
 
-
+ 
 // Special thanks to Matthew Rahtz - http://amid.fish/karplus-strong/
 
 AudioSynthKarplusStrongMod  stringArray[MAX_STRINGS];
@@ -35,57 +35,57 @@ AudioConnection          patchCordOutRight(sumMix, 0, audioOut, 1);
 
 
 
-void scalerSetup()//might be a better way to do this, but right now it is useful to be able to do it this way
+void octaveDivSetup()//might be a better way to do this, but right now it is useful to be able to do it this way
 {// each octave gets a different scaler. This scaler is also used in the actual string synth
   for (int i = 0; i <= 11; i++)
   {
-    scalerMidiNote[i] = 1<<5;
-    midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
+    octaveDivMidiNote[i] = 1;
+    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   } 
   for (int i = 12; i <= 23; i++)
   {
-    scalerMidiNote[i] = 1<<4;
-    midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
+    octaveDivMidiNote[i] = 1;
+    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   } 
   for (int i = 24; i <= 35; i++)
   {
-    scalerMidiNote[i] = 1<<3;
-    midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
+    octaveDivMidiNote[i] = 1;
+    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
   for (int i = 36; i <= 47; i++)
   {
-    scalerMidiNote[i] = 1<<2;
-    midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
+    octaveDivMidiNote[i] = 1;
+    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
   for (int i = 48; i <= 59; i++)
   {
-    scalerMidiNote[i] = 1<<1;
-    midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
+    octaveDivMidiNote[i] = 1;
+    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
   for (int i = 60; i <= 71; i++)
   {
-    scalerMidiNote[i] = 1<<0;
-    midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
+    octaveDivMidiNote[i] = 1;
+    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
     for (int i = 72; i <= 83; i++)
   {
-    scalerMidiNote[i] = 1<<0;
-    midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
+    octaveDivMidiNote[i] = 1;
+    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
     for (int i = 84; i <= 95; i++)
   {
-    scalerMidiNote[i] = 1<<0;
-    midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
+    octaveDivMidiNote[i] = 1;
+    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
     for (int i = 96; i <= 107; i++)
   {
-    scalerMidiNote[i] = 1<<0;
-    midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
+    octaveDivMidiNote[i] = 1;
+    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
     for (int i = 108; i <= 127; i++)
   {
-    scalerMidiNote[i] = 1<<0;
-    midiNotesScaled[i] = MidiNotesDelay[i]/scalerMidiNote[i];
+    octaveDivMidiNote[i] = 1;
+    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
   
 }
@@ -113,8 +113,8 @@ void setPitchBend(int pitchBend)//pitchbend - currently is not optimal on bend d
 
 void stringsSetup()//initial setup
 {
-  scalerSetup();
-  double stringScaler =  1.0/(double)MAX_STRINGS;
+  octaveDivSetup();
+  double stringScaler =  4.0/(double)MAX_STRINGS;
 
   for (int i = 0; i < MIXER_COUNT; i++)
   {
@@ -125,22 +125,21 @@ void stringsSetup()//initial setup
     
     sumMix.gain(i,1);
   }
-  setDecayVal(127);
+  setDecayVal(120);
   setPitchBend(0);
   return;
 }
 
 void stringPlayer(uint8_t midiNote, uint8_t velIn)//two parameters from the midi section.  
 {
-  uint32_t velocity = (velIn << 9) +511;
+  int32_t velocity = (velIn << 9) +511;
   static uint8_t strings;
     if (++strings > MAX_STRINGS - 1)
     { 
    strings = 0;
     }
-      Serial.println(strings);
-      stringArray[strings].noteOff();
-      stringArray[strings].noteOn(midiNotesScaled[midiNote], velocity, scalerMidiNote[midiNote]);
+     stringArray[strings].noteOff();
+      stringArray[strings].noteOn(midiNotesScaled[midiNote], velocity, octaveDivMidiNote[strings]);
       
 return;
 

@@ -90,7 +90,7 @@ void AudioSynthKarplusStrongMod::setPitchBend(double pitch)
     globalPitch = pitch;
   }
 }
-void AudioSynthKarplusStrongMod::setDecayTime(uint32_t decay)
+void AudioSynthKarplusStrongMod::setDecayTime(int32_t decay)
 {
   if (decay >= 32767)
   {
@@ -123,20 +123,39 @@ void AudioSynthKarplusStrongMod::checkLength(void)
 void AudioSynthKarplusStrongMod::update(void)
 {
   audio_block_t *block;
+  uint32_t filterLoop = (octaveScaler*AVG_LOOPS) -1;
+  if (filterLoop <= 2)
+  {
+    filterLoop=2;
+  }
   switch (state)
   {
     case 0:
       filledFlag=0;
       break;
       case 1:
-      Serial.println(filledFlag);
       if(!filledFlag)
       {
-      for (int i = 0; i < MAX_BUFF - 1; i++)
+      for (int i = 0; i < MAX_BUFF - 1; i++)//initial load of tasty noise
       {
         randGen();
         int32_t volumeScale = (randomNum / (magnitude));
         buffer[i] = (volumeScale);
+      }
+
+      for (int j = 0; j<filterLoop; j++) //averaging function to remove aliasing
+      {
+            for (int i = 0; i < MAX_BUFF - 1; i++)
+      {
+        if (i==0)
+          {
+            buffer[0]= (buffer[MAX_BUFF-1]>>1)+(buffer[0]>>1);
+          }
+        else
+        {
+          buffer[i] = (buffer[i-1]>>1)+(buffer[i]>>1);
+        }
+      }
       }
       filledFlag=1;
       }
@@ -154,28 +173,27 @@ void AudioSynthKarplusStrongMod::update(void)
 
         static int32_t prior;
         if (bufferIndex > 0) {
-          prior = buffer[bufferIndex - 1] >> 1;
+          prior = buffer[bufferIndex - 1];
         } else {
-          prior = buffer[bufferLenPitch - 1] >> 1;
+          prior = buffer[bufferLenPitch - 1];
         }
         int16_t *data = block->data;
 
         checkLength();
+
         for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
 
-          int32_t in = buffer[bufferIndex] >> 1;
-          int32_t  avg = (in + prior);
-          int32_t out = (avg * decayTime) >> 15;
-          uint32_t compare = i % (octaveScaler << 1);
+          int32_t in = buffer[bufferIndex] ;
+          int32_t  avg = (in/2 + prior/2);
+          int32_t out = (avg * decayTime) >> 16;
+          uint32_t compare = (i+1) % (octaveScaler);
           prior = in;
-
           buffer[bufferIndex] = out;
-          // if (compare ==0)
+          *data++ = (out);
+          
           {
             if (++bufferIndex >= bufferLenPitch - 1) bufferIndex = 0;
           }
-
-          *data++ = (out);
         }
 
         transmit(block);
@@ -184,7 +202,7 @@ void AudioSynthKarplusStrongMod::update(void)
       
         filledFlag=0;
       break;
-    default:
+      default:
     
       filledFlag=0;
       state = 0;
