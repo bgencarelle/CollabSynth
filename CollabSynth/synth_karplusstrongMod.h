@@ -56,7 +56,7 @@ public:
     if (velocity >=512)
     {
       magnitude = 65536-(int32_t)velocity;
-      Serial.println(magnitude,DEC);
+
     } else 
     {
       noteOff();
@@ -80,8 +80,8 @@ private:
   uint32_t bufferIndex;
 
   static uint32_t seed;  // must start at 1
-  int32_t buffer[MAX_BUFF]; // TODO: dynamically use audio memory blocks
-  uint32_t globalScaler;
+  volatile int32_t buffer[MAX_BUFF]; // TODO: dynamically use audio memory blocks
+  uint32_t octaveScaler;
 };
 
 #endif

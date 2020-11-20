@@ -28,6 +28,7 @@
 volatile int32_t randomNum = 1;
 volatile int32_t randomCheck = 1;
 boolean startup = 1;
+boolean filledFlag=0;
 
 void trngSetup(void) //setup RNG for SAMD51
 {
@@ -39,137 +40,154 @@ void randGen()                            // Called when TRNG data is available
 #if defined(__SAMD51__)
   if (startup == 1)
   {
- 
-  MCLK->APBCMASK.reg |= MCLK_APBCMASK_TRNG;    // Activate the CLK_TRNG_APB clock
-  NVIC_SetPriority(TRNG_IRQn, 0);              // Set NVIC priority for TRNG to 0
-  NVIC_EnableIRQ(TRNG_IRQn);                   // Connect TRNG to NVIC
-  TRNG->INTENCLR.reg = TRNG_INTENCLR_DATARDY;  // Disable the TRNG interrupt
-  TRNG->CTRLA.reg = TRNG_CTRLA_ENABLE;         // Enable the TRNG peripheral
+
+    MCLK->APBCMASK.reg |= MCLK_APBCMASK_TRNG;    // Activate the CLK_TRNG_APB clock
+    NVIC_SetPriority(TRNG_IRQn, 0);              // Set NVIC priority for TRNG to 0
+    NVIC_EnableIRQ(TRNG_IRQn);                   // Connect TRNG to NVIC
+    TRNG->INTENCLR.reg = TRNG_INTENCLR_DATARDY;  // Disable the TRNG interrupt
+    TRNG->CTRLA.reg = TRNG_CTRLA_ENABLE;         // Enable the TRNG peripheral
     startup = 0;
     delayMicroseconds(10);
   }
-  
+
   randomNum = TRNG->DATA.reg;                     // Read & store the TRNG data output
   if (randomCheck == randomNum)
-    {
-      delayMicroseconds(1);
-      randGen();
-    }
+  {
+    delayMicroseconds(1);
+    randGen();
+  }
   TRNG->INTFLAG.bit.DATARDY = 1;             // Clear the DATA READY interrupt flag
-  randomCheck=randomNum;
+  randomCheck = randomNum;
 #else
   uint32_t hi;
   hi = multiply_16bx16t(16807, randomNum); // 16807 * (randomNum >> 16)
-  randomNum = 16807 * (randomNum & 0xFFFF); 
-  randomNum += (hi & 0x7FFF) << 16; 
-  randomNum += hi >> 15; 
-  randomNum = (randomNum & 0x7FFFFFFF) + (randomNum >> 31); 
+  randomNum = 16807 * (randomNum & 0xFFFF);
+  randomNum += (hi & 0x7FFF) << 16;
+  randomNum += hi >> 15;
+  randomNum = (randomNum & 0x7FFFFFFF) + (randomNum >> 31);
 
- 
+
 #endif
 
 }
- int32_t AudioSynthKarplusStrongMod::decayTime;
- double AudioSynthKarplusStrongMod::globalPitch;
- int32_t   AudioSynthKarplusStrongMod::magnitude;
+int32_t AudioSynthKarplusStrongMod::decayTime;
+double AudioSynthKarplusStrongMod::globalPitch;
+int32_t   AudioSynthKarplusStrongMod::magnitude;
 
- void AudioSynthKarplusStrongMod::setPitchBend(double pitch)
- {
+void AudioSynthKarplusStrongMod::setPitchBend(double pitch)
+{
 
-   if (pitch <0.125 )
-   {
-     globalPitch = .125;
-   }
-   else if (pitch >= 8.0)
-   {
-     globalPitch = 8.0;
-   }
-   else
-   {
-     globalPitch = pitch;
-   }
- }
- void AudioSynthKarplusStrongMod::setDecayTime(uint32_t decay)
- {
-   if (decay >=32767)
-   {
-     AudioSynthKarplusStrongMod::decayTime = 32767;
-   }
-   else if (decay < 30000)
-   {
-     AudioSynthKarplusStrongMod::decayTime = 30000;
-   }
-   else
-   {
-       AudioSynthKarplusStrongMod::decayTime = decay;
-   }
- }
- void AudioSynthKarplusStrongMod::checkLength(void)
- {
-   uint32_t testSize = bufferLen * globalPitch;
-   if (testSize <= 5)
-   {
-     bufferLenPitch = 5;
-   }
-   else if (testSize>=MAX_BUFF-1) {
-     bufferLenPitch = MAX_BUFF-1;
-   }
-   else
-   {
-     bufferLenPitch = testSize;
-   }
- }
- void AudioSynthKarplusStrongMod::update(void)
- {
+  if (pitch < 0.125 )
+  {
+    globalPitch = .125;
+  }
+  else if (pitch >= 8.0)
+  {
+    globalPitch = 8.0;
+  }
+  else
+  {
+    globalPitch = pitch;
+  }
+}
+void AudioSynthKarplusStrongMod::setDecayTime(uint32_t decay)
+{
+  if (decay >= 32767)
+  {
+    AudioSynthKarplusStrongMod::decayTime = 32767;
+  }
+  else if (decay < 30000)
+  {
+    AudioSynthKarplusStrongMod::decayTime = 30000;
+  }
+  else
+  {
+    AudioSynthKarplusStrongMod::decayTime = decay;
+  }
+}
+void AudioSynthKarplusStrongMod::checkLength(void)
+{
+  uint32_t testSize = bufferLen * globalPitch;
+  if (testSize <= 5)
+  {
+    bufferLenPitch = 5;
+  }
+  else if (testSize >= MAX_BUFF - 1) {
+    bufferLenPitch = MAX_BUFF - 1;
+  }
+  else
+  {
+    bufferLenPitch = testSize;
+  }
+}
+void AudioSynthKarplusStrongMod::update(void)
+{
   audio_block_t *block;
-
-  if (state == 0) return;
-
-  if (state == 1) {
-    for (int i=0; i < MAX_BUFF-2; i++) {
-      randGen();
-      int32_t volumeScale = (randomNum/(magnitude));
-      buffer[i] = (volumeScale);
-    }
-   // seed = randomNum;
-    state = 2;
-  }
-  if (state == 2)
+  switch (state)
   {
-  block = allocate();
-  if (!block) 
-  {
-    state = 0;
-    return;
+    case 0:
+      filledFlag=0;
+      break;
+      case 1:
+      Serial.println(filledFlag);
+      if(!filledFlag)
+      {
+      for (int i = 0; i < MAX_BUFF - 1; i++)
+      {
+        randGen();
+        int32_t volumeScale = (randomNum / (magnitude));
+        buffer[i] = (volumeScale);
+      }
+      filledFlag=1;
+      }
+      //seed = randomNum;
+      state = 2;
+      break;
+        case 2:
+      {
+        block = allocate();
+        if (!block)
+        {
+          state = 0;
+          return;
+        }
+
+        static int32_t prior;
+        if (bufferIndex > 0) {
+          prior = buffer[bufferIndex - 1] >> 1;
+        } else {
+          prior = buffer[bufferLenPitch - 1] >> 1;
+        }
+        int16_t *data = block->data;
+
+        checkLength();
+        for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+
+          int32_t in = buffer[bufferIndex] >> 1;
+          int32_t  avg = (in + prior);
+          int32_t out = (avg * decayTime) >> 15;
+          uint32_t compare = i % (octaveScaler << 1);
+          prior = in;
+
+          buffer[bufferIndex] = out;
+          // if (compare ==0)
+          {
+            if (++bufferIndex >= bufferLenPitch - 1) bufferIndex = 0;
+          }
+
+          *data++ = (out);
+        }
+
+        transmit(block);
+        release(block);
+      }
+      
+        filledFlag=0;
+      break;
+    default:
+    
+      filledFlag=0;
+      state = 0;
   }
 
-  int32_t prior;
-  if (bufferIndex > 0) {
-    prior = buffer[bufferIndex - 1];
-  } else {
-    prior = buffer[bufferLenPitch - 1];
   }
-  int16_t *data = block->data;
-
- checkLength();
-  for (int i=0; i < AUDIO_BLOCK_SAMPLES; i++) {
-
-        int32_t in = buffer[bufferIndex];
-        int32_t  avg = (in +prior)>>1;
-        int32_t out = (avg*decayTime)>>15;
-    uint32_t compare = i%(globalScaler<<1);
-    prior = in;
-
-    buffer[bufferIndex] = out;
-   // if (compare ==0)
-    {
-        if (++bufferIndex >= bufferLenPitch-1) bufferIndex = 0;
-    }
-
-  *data++ = (out);
-  }
-
-  transmit(block);
-  release(block);
- }
- }
