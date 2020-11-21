@@ -42,7 +42,7 @@ inline void AudioSynthKarplusStrongMod::randGen()                            // 
   }
   TRNG->INTFLAG.bit.DATARDY = 1;             // Clear the DATA READY interrupt flag
   randomCheck = randomNum;
-  randomFloat = (float)(randomNum)*magnitude;
+  randomFloat = (float)(randomNum)*magnitude*floatScale;
 
 }
 void AudioSynthKarplusStrongMod::setPitchBend(float pitch)
@@ -98,7 +98,7 @@ void AudioSynthKarplusStrongMod::update(void)
     return;
   if (state == 1)
   {
-    for (int i = 0; i < bufferLenPitch - 1; i++) //initial load of tasty noise
+    for (int i = 0; i < bufferLenPitch-1; i++) //initial load of tasty noise
     {
       randGen();
       buffer[i] = (randomFloat);
@@ -110,7 +110,7 @@ void AudioSynthKarplusStrongMod::update(void)
     }
     for (int j = 0; j<filterLoop; j++)
     {
-    for (int i = 0; i < bufferLenPitch - 1; i++)
+    for (int i = 0; i < bufferLenPitch-1; i++)
     {
       if (i == 0)
       {
@@ -144,12 +144,12 @@ void AudioSynthKarplusStrongMod::update(void)
 
   for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
     float in = buffer[bufferIndex];
-    float avg = (in + prior) * .5;
+    float avg = (in + prior) * .4999;
     buffer[bufferIndex] = avg;
     // uint32_t compare = (i+1) % (octaveScaler);
 
-    int16_t out = int16_t(avg);
-    *data++ = int16_t(out);
+    int16_t out = int16_t(avg*32767.0);
+    *data++ = (out);
 
     prior = in;
 

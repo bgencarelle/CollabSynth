@@ -40,7 +40,7 @@ void setup()
     MidiNotesDelay[x] = uint32_t(AUDIO_SAMPLE_RATE_EXACT/freqCalc);
     MidiNotesFreq[x] = freqCalc;
   }
-  AudioMemory(40);//allocate AudioMemory according to some magical thinking-
+  AudioMemory(100);//allocate AudioMemory according to some magical thinking-
   Serial.begin(9600);//because lacking debugger
   Serial.println("Begin");
   
@@ -52,7 +52,7 @@ void setup()
 void loop()
 {
   //midiB.read();//this is the only thing in our loop
-  noteTest=60;
+  noteTest=48;
 //  
 //    if((noteTest+12) > 127)
 //    {
@@ -67,6 +67,6 @@ void loop()
 
 
      Serial.println("NOTE ON");
-    delayMicroseconds(100000000);
+    delayMicroseconds(1000000000);
     
 }

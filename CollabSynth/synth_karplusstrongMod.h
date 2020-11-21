@@ -31,8 +31,8 @@
 #include "utility/dspinst.h"
 #define MAX_BUFF 1000
 #define AVG_LOOPS 8
-//#define FLOATSCALE32  1.0/2147483648.0
-#define FLOATSCALE16 1.0/32768.0
+#define FLOATSCALE32  1.0/2147483648.0
+//#define FLOATSCALE16 1.0/32768.0
 
 
 
