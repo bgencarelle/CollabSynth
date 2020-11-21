@@ -114,7 +114,7 @@ void setPitchBend(int pitchBend)//pitchbend - currently is not optimal on bend d
 void stringsSetup()//initial setup
 {
   octaveDivSetup();
-  double stringScaler =  4.0/(double)MAX_STRINGS;
+  float stringScaler =  4.0/(float)MAX_STRINGS;
 
   for (int i = 0; i < MIXER_COUNT; i++)
   {
@@ -125,9 +125,12 @@ void stringsSetup()//initial setup
     
     sumMix.gain(i,1);
   }
-  setDecayVal(120);
+  stringArray[0].randGenStartup(1);//
+
+  setDecayVal(127);
   setPitchBend(0);
   return;
+  
 }
 
 void stringPlayer(uint8_t midiNote, uint8_t velIn)//two parameters from the midi section.  
@@ -138,8 +141,8 @@ void stringPlayer(uint8_t midiNote, uint8_t velIn)//two parameters from the midi
     { 
    strings = 0;
     }
-     stringArray[strings].noteOff();
-      stringArray[strings].noteOn(midiNotesScaled[midiNote], velocity, octaveDivMidiNote[strings]);
+     stringArray[0].noteOff();
+      stringArray[0].noteOn(midiNotesScaled[midiNote], velocity, octaveDivMidiNote[strings]);
       
 return;
 

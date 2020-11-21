@@ -63,28 +63,10 @@ void loop()
 //      noteTest=noteTest+12;
 //    }
 
-     Serial.print("VARIANT_GCLK2_FREQ:  ");
-     Serial.println(VARIANT_GCLK2_FREQ/1000000,DEC);
-     Serial.print("MHZ");
-     Serial.print("TC_CTRLA_PRESCALER_DIV2 ");
-     Serial.println(TC_CTRLA_PRESCALER_DIV2,DEC);  
-     Serial.print("TC_CTRLA_PRESCALER_DIV4 ");
-     Serial.println(TC_CTRLA_PRESCALER_DIV4,DEC);  
-     Serial.print("TC_CTRLA_PRESCALER_DIV8 ");
-     Serial.println(TC_CTRLA_PRESCALER_DIV8,DEC);  
-     Serial.print("TC_CTRLA_PRESCALER_DIV16 ");
-     Serial.println(TC_CTRLA_PRESCALER_DIV16,DEC);
-     
-     Serial.print("CALCULATED RECONSTRUCTION "); 
-     double calcFreq=MidiNotesFreq[noteTest]*MidiNotesDelay[noteTest];
-     Serial.println(calcFreq, DEC);
-     Serial.print("error percentage:");
-     double errorPercentage = ((fabs(AUDIO_SAMPLE_RATE_EXACT-calcFreq)/AUDIO_SAMPLE_RATE_EXACT)*100.000);
-     Serial.println(errorPercentage);
      stringPlayer(noteTest, 127);
 
 
-     
-    delayMicroseconds(5000000);
+     Serial.println("NOTE ON");
+    delayMicroseconds(100000000);
     
 }
