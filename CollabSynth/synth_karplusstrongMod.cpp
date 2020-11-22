@@ -27,14 +27,14 @@
 
 
 #ifdef FLOATSCALE16
-float AudioSynthKarplusStrongMod::floatScale = FLOATSCALE16*32767.0;
+float AudioSynthKarplusStrongMod::floatScale = FLOATSCALE16;
 #else
-float AudioSynthKarplusStrongMod::floatScale = FLOATSCALE32*32767.0;
+float AudioSynthKarplusStrongMod::floatScale = FLOATSCALE32;
 #endif
 
 inline void AudioSynthKarplusStrongMod::randGen()                            // Called when TRNG data is available
 {
-  #ifdef HARDWARE_RANDOM
+//  #ifdef HARDWARE_RANDOM
   // This interrupt handler is called when a new random number is available; it reads the random number and clears the interrupt
   randomNum = TRNG->DATA.reg;                     // Read & store the TRNG data output
   if (randomCheck == randomNum)
@@ -47,17 +47,17 @@ inline void AudioSynthKarplusStrongMod::randGen()                            // 
   TRNG->INTFLAG.bit.DATARDY = 1;             // Clear the DATA READY interrupt flag
   randomCheck = randomNum;
   }
-  #else
-
-  uint32_t lo = (uint32_t)randomNum;
-  uint32_t hi;
-  hi = multiply_16bx16t(16807, lo); // 16807 * (lo >> 16)
-  lo = 16807 * (lo & 0xFFFF);
-  lo += (hi & 0x7FFF) << 16;
-  lo += hi >> 15;
-  lo = (lo & 0x7FFFFFFF) + (lo >> 31);
-  randomNum=(int32_t)lo;
-  #endif
+//  #else
+//
+//  uint32_t lo = (uint32_t)randomNum;
+//  uint32_t hi;
+//  hi = multiply_16bx16t(16807, lo); // 16807 * (lo >> 16)
+//  lo = 16807 * (lo & 0xFFFF);
+//  lo += (hi & 0x7FFF) << 16;
+//  lo += hi >> 15;
+//  lo = (lo & 0x7FFFFFFF) + (lo >> 31);
+//  randomNum=(int32_t)lo;
+//  #endif
 
   
 }
@@ -115,26 +115,16 @@ void AudioSynthKarplusStrongMod::update(void)
   if (state == 1)
   {
     
-      Serial.print("MAGNITUDE:  ");
-      Serial.println(magnitude);
     for (int i = 0; i < bufferLenPitch; i++) //initial load of tasty noise
     {
       randGen();
-      buffer[i] = (randomNum);
+      buffer[i] = ((float)randomNum*floatScale*magnitude);
 
     }
+    Serial.println(buffer[49]);
     
-    Serial.print("BEFORE: ");
-    Serial.println(buffer[4]);
-     for (int i = 0; i < bufferLenPitch; i++)
-    {
-     buffer[i]=int32_t((float)buffer[i]*magnitude);
-    }
     
-    Serial.print("after: ");
-    Serial.println(buffer[4]);
-    
-    uint32_t filterLoop = (AVG_LOOPS);
+    uint32_t filterLoop = (octaveScaler>>3);
     if (filterLoop <= 2)
     {
       filterLoop = 2;
@@ -145,22 +135,19 @@ void AudioSynthKarplusStrongMod::update(void)
     {
       if (i == 0)
       {
-        buffer[0] = ((buffer[bufferLenPitch-1]) + (buffer[0]))>>1;
+        buffer[0] = ((buffer[bufferLenPitch-1]) + (buffer[0]))*.500;
       }
       else
       {
-        buffer[i] = ((buffer[i - 1]) + (buffer[i]))>>1 ;
+        buffer[i] = ((buffer[i - 1]) + (buffer[i]))*.500 ;
       }
     }
     }
-         for (int i = 0; i < bufferLenPitch; i++)
-    {
-     buffer[i]=int32_t((float)buffer[i]*magnitude);
-    }
+//         for (int i = 0; i < bufferLenPitch; i++)
+//    {
+//     buffer[i]=(buffer[i]);
+//    }
      
-    Serial.print("after after: ");
-    Serial.println(buffer[4]);
-
     state = 2;
   }
   block = allocate();
@@ -170,7 +157,7 @@ void AudioSynthKarplusStrongMod::update(void)
     return;
   }
 
-  int32_t prior;
+  float prior;
 
   if (bufferIndex > 0) {
     prior = buffer[bufferIndex - 1];
@@ -179,15 +166,19 @@ void AudioSynthKarplusStrongMod::update(void)
   }
   int16_t *data = block->data;
 
+  
   checkLength();
-
   for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-    int32_t in = buffer[bufferIndex];
-    int32_t out = int32_t((in + prior) *decayTime) >> 1;
-    *data++ = int16_t(((float)out*floatScale));
+    float in = buffer[bufferIndex];
+    float out = ((in + prior) *.5*decayTime);
+    *data++ = int16_t(out*32767.0);
     buffer[bufferIndex] = out;
     prior = in;
+    if((increment++ >=octaveScaler)||octaveScaler==1)
+    {      
+      increment=0;
     if (++bufferIndex >= bufferLen) bufferIndex = 0;
+    }
   }
 
 

@@ -2,12 +2,12 @@
      3/Feb/2019 Initial commit to Github. Modified Audio libraries to increase sample rate and also fix issues with KP engine
  
 */
-
+#define SAMPLERATEOVERRIDE 1
 
 #include <MIDI.h>
 #include <Audio.h>
 
- #include "synth_karplusstrongMod.h"
+#include "synth_karplusstrongMod.h"
 
 
 #include <Wire.h>
@@ -59,10 +59,12 @@ void loop()
     }
 
 
-     stringPlayer(60, noteTest);
+     stringPlayer(60,127,127);
+     
 
 
-     Serial.println("NOTE ON");
+     Serial.print("NOTE DELAY: ");
+       Serial.println(MidiNotesDelay[48]);
     delayMicroseconds(1000000);
     
 

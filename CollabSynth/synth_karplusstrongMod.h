@@ -30,9 +30,9 @@
 #include "AudioStream.h"
 #include "utility/dspinst.h"
 #define MAX_BUFF 1200
-#define AVG_LOOPS 1
+#define AVG_LOOPS 2
 #define FLOATSCALE32  1.0/2147483648.0
-#define FLOATSCALE16 1.0/32768.0
+//#define FLOATSCALE16 1.0/32768.0
 #define HARDWARE_RANDOM 1 //Forgot what they call samd51 in the preprocessor section
 
 
@@ -112,9 +112,10 @@ class AudioSynthKarplusStrongMod : public AudioStream
   private:
     uint8_t  state;     // 0=steady output, 1=begin on next update, 2=playing
     uint32_t bufferIndex;
-    int32_t buffer[MAX_BUFF]; // TODO: dynamically use audio memory blocks
+    float buffer[MAX_BUFF]; // TODO: dynamically use audio memory blocks
     int32_t octaveScaler;
     static uint32_t seed;
+    volatile uint8_t increment; 
 };
 
 #endif
