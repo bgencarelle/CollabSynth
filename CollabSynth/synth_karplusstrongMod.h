@@ -29,10 +29,10 @@
 #include "Arduino.h"
 #include "AudioStream.h"
 #include "utility/dspinst.h"
-#define MAX_BUFF 1200
+#define MAX_BUFF 800
 #define AVG_LOOPS 2
-#define FLOATSCALE32  1.0/2147483648.0
-//#define FLOATSCALE16 1.0/32768.0
+#define FLOATSCALE32  32767.0/2147483648.0
+#define FLOATSCALE16 32767.0/32768.0
 #define HARDWARE_RANDOM 1 //Forgot what they call samd51 in the preprocessor section
 
 
@@ -74,9 +74,13 @@ class AudioSynthKarplusStrongMod : public AudioStream
         delayMicroseconds(10);
       }
     }
+    void noteOff() 
+    {
+      state = 0;
+    }
     void noteOn(uint32_t len = 440, float vel=1.0, uint32_t octaveDiv = 1)
     {
-     
+
       octaveScaler = octaveDiv;
       if (len > MAX_BUFF - 1) len = MAX_BUFF - 1; //for pitch shifting
       bufferLen = len;
@@ -100,10 +104,7 @@ class AudioSynthKarplusStrongMod : public AudioStream
       return;
     }
 
-    void noteOff() 
-    {
-      state = 0;
-    }
+
        void randGen();
     void setPitchBend(float pitch = 1.0);
     void setDecayTime(float decay = 1.0);

@@ -39,7 +39,7 @@ inline void AudioSynthKarplusStrongMod::randGen()                            // 
   randomNum = TRNG->DATA.reg;                     // Read & store the TRNG data output
   if (randomCheck == randomNum)
   {
-    delayMicroseconds(10);
+    delayMicroseconds(1);
     randGen();
   }
   else
@@ -81,15 +81,15 @@ void AudioSynthKarplusStrongMod::setDecayTime(float decay)
 {
   if (decay >= 1.0)
   {
-   decayTime = 1.0;
+   decayTime = .4999;
   }
   else if (decay < 0.92)
   {
-    decayTime = 0.915;
+    decayTime = 0.45075;
   }
   else
   {
-    decayTime = decay;
+    decayTime = decay*.49999;
   }
 }
 void AudioSynthKarplusStrongMod::checkLength(void)
@@ -121,10 +121,9 @@ void AudioSynthKarplusStrongMod::update(void)
       buffer[i] = ((float)randomNum*floatScale*magnitude);
 
     }
-    Serial.println(buffer[49]);
     
     
-    uint32_t filterLoop = (octaveScaler>>3);
+    uint32_t filterLoop = (octaveScaler);
     if (filterLoop <= 2)
     {
       filterLoop = 2;
@@ -143,10 +142,10 @@ void AudioSynthKarplusStrongMod::update(void)
       }
     }
     }
-//         for (int i = 0; i < bufferLenPitch; i++)
-//    {
-//     buffer[i]=(buffer[i]);
-//    }
+         for (int i = 0; i < bufferLenPitch; i++)
+    {
+     buffer[i]=(buffer[i]*magnitude);
+    }
      
     state = 2;
   }
@@ -170,11 +169,11 @@ void AudioSynthKarplusStrongMod::update(void)
   checkLength();
   for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
     float in = buffer[bufferIndex];
-    float out = ((in + prior) *.5*decayTime);
-    *data++ = int16_t(out*32767.0);
+    float out = ((in + prior) *decayTime);
+    *data++ = int16_t(out);
     buffer[bufferIndex] = out;
     prior = in;
-    if((increment++ >=octaveScaler)||octaveScaler==1)
+  //  if((increment++ >=octaveScaler)||octaveScaler==1)
     {      
       increment=0;
     if (++bufferIndex >= bufferLen) bufferIndex = 0;

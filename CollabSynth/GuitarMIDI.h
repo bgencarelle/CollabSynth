@@ -3,7 +3,8 @@
 #define PITCHBEND_RANGE -(1.0/8192.0)  //should be 8192 >> or << by no more than say 5
 
 volatile uint8_t stringVoice=0;
- 
+volatile uint8_t lastNote[MAX_STRINGS];
+
 // Special thanks to Matthew Rahtz - http://amid.fish/karplus-strong/
 
 AudioSynthKarplusStrongMod  stringArray[MAX_STRINGS];
@@ -31,8 +32,8 @@ AudioConnection          patchCord11(stringArray[11], 0, mixer[2], 3);
 AudioConnection          patchCordSubMix2(mixer[2], 0, sumMix, 2);
 #endif
 
-AudioConnection          patchCordOutLeft(sumMix, 0, audioOut, 0);
-AudioConnection          patchCordOutRight(sumMix, 0, audioOut, 1);
+AudioConnection          patchCordOutLeft(sumMix, 0, mainMixer4, 0);
+AudioConnection          patchCordOutRight(sumMix, 0, mainMixer4, 1);
 
 
 
@@ -40,22 +41,22 @@ void octaveDivSetup()//might be a better way to do this, but right now it is use
 {// each octave gets a different scaler. This scaler is also used in the actual string synth
   for (int i = 0; i <= 11; i++)
   {
-    octaveDivMidiNote[i] = 1<<5;
+    octaveDivMidiNote[i] = 1;
     midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   } 
   for (int i = 12; i <= 23; i++)
   {
-    octaveDivMidiNote[i] = 1<<4;
+    octaveDivMidiNote[i] = 1;
     midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   } 
   for (int i = 24; i <= 35; i++)
   {
-    octaveDivMidiNote[i] = 1<<3;
+    octaveDivMidiNote[i] = 1;
     midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
   for (int i = 36; i <= 47; i++)
   {
-    octaveDivMidiNote[i] = 1<<2;
+    octaveDivMidiNote[i] = 1;
     midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
   for (int i = 48; i <= 59; i++)
@@ -65,7 +66,7 @@ void octaveDivSetup()//might be a better way to do this, but right now it is use
   }
   for (int i = 60; i <= 71; i++)
   {
-    octaveDivMidiNote[i] = 1<<2;
+    octaveDivMidiNote[i] = 1;
     midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
     for (int i = 72; i <= 83; i++)
@@ -157,6 +158,7 @@ void stringPlayer(uint8_t midiNote=60, uint8_t velIn=127, uint8_t decayIn = 125)
 {
   setDecayVal(decayIn);
   float velocity=  setAttack(velIn);
+
     if (++stringVoice > MAX_STRINGS - 1)
     { 
       
@@ -167,10 +169,12 @@ void stringPlayer(uint8_t midiNote=60, uint8_t velIn=127, uint8_t decayIn = 125)
     {
       stringArray[stringVoice-1].noteOff();
     }
-      stringArray[stringVoice].noteOn(midiNotesScaled[midiNote], velocity, octaveDivMidiNote[midiNote]);
+      stringArray[stringVoice].noteOn(MidiNotesDelay[midiNote], velocity, octaveDivMidiNote[midiNote]);
 
+      
       Serial.print("STRING VOICE: ");
       Serial.println(stringVoice);
+      
 return;
 
 }
