@@ -29,10 +29,11 @@
 #include "Arduino.h"
 #include "AudioStream.h"
 #include "utility/dspinst.h"
-#define MAX_BUFF 1000
-#define AVG_LOOPS 8
+#define MAX_BUFF 1200
+#define AVG_LOOPS 1
 #define FLOATSCALE32  1.0/2147483648.0
-//#define FLOATSCALE16 1.0/32768.0
+#define FLOATSCALE16 1.0/32768.0
+#define HARDWARE_RANDOM 1 //Forgot what they call samd51 in the preprocessor section
 
 
 
@@ -44,11 +45,11 @@ class AudioSynthKarplusStrongMod : public AudioStream
       state = 0;
     }
 #ifdef FLOATSCALE16
-    int16_t randomNum;
-    int16_t randomCheck;
+    int16_t randomNum=1;
+    int16_t randomCheck=1;
 #else
-    int32_t randomNum;
-    int32_t randomCheck;
+    int32_t randomNum=1;
+    int32_t randomCheck=1;
 #endif
     float randomFloat;
     static float floatScale;
@@ -73,48 +74,47 @@ class AudioSynthKarplusStrongMod : public AudioStream
         delayMicroseconds(10);
       }
     }
-    void noteOn(uint32_t len = 440, int32_t velocity = 65536, uint32_t octaveDiv = 1)
+    void noteOn(uint32_t len = 440, float vel=1.0, uint32_t octaveDiv = 1)
     {
+     
       octaveScaler = octaveDiv;
       if (len > MAX_BUFF - 1) len = MAX_BUFF - 1; //for pitch shifting
       bufferLen = len;
       bufferLenPitch = len;
       bufferIndex = 0;
-      if (velocity >= 512)
+
+      if (vel >1.0)
+       {
+        magnitude = 1.0;
+       }
+      else if (vel > .014)
       {
-        magnitude = float(velocity) / 65536.0;
+        magnitude = vel;
 
       } else
       {
+        magnitude=0.0;
         noteOff();
-        return;
       }
-//            
-//        Serial.print("DecayTime");
-//        Serial.println(decayTime,DEC);
-//        Serial.print("magnitude");
-//        Serial.println(magnitude,DEC);
       state = 1;
       return;
     }
 
-    void noteOff() {
-      int32_t oldDecay = decayTime;
-      setDecayTime(0);
-      setDecayTime(oldDecay);
+    void noteOff() 
+    {
       state = 0;
-      return;
     }
        void randGen();
     void setPitchBend(float pitch = 1.0);
-    void setDecayTime(int32_t decay = 32767);
+    void setDecayTime(float decay = 1.0);
     void inline checkLength(void);
     virtual void update(void);
   private:
     uint8_t  state;     // 0=steady output, 1=begin on next update, 2=playing
     uint32_t bufferIndex;
-    float buffer[MAX_BUFF]; // TODO: dynamically use audio memory blocks
+    int32_t buffer[MAX_BUFF]; // TODO: dynamically use audio memory blocks
     int32_t octaveScaler;
+    static uint32_t seed;
 };
 
 #endif

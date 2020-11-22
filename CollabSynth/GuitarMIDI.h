@@ -1,7 +1,7 @@
 #define MAX_STRINGS 12
 #define MIXER_COUNT MAX_STRINGS>>2 // 1 mixer for every 4 voices
 #define PITCHBEND_RANGE -(1.0/8192.0)  //should be 8192 >> or << by no more than say 5
-
+volatile uint8_t stringVoice=0;
  
 // Special thanks to Matthew Rahtz - http://amid.fish/karplus-strong/
 
@@ -90,17 +90,32 @@ void octaveDivSetup()//might be a better way to do this, but right now it is use
   
 }
 
-void setDecayVal(uint32_t modValue)// this sets the decay time of the strings. It is currently mapped to the mod wheel, but is technically actually a sustain
+inline void setDecayVal(uint32_t modValue)// this sets the decay time of the strings. It is currently mapped to the mod wheel, but is technically actually a sustain
 {
-  int32_t value = 32260 + ((modValue) << 2) ; //need an offset, otherwise too severe
+  float value = 32260.0+ float((modValue) << 2) ; //need an offset, otherwise too severe
+  float decayFloat;
+  
+    if (value >= 32767)
+  {
+   decayFloat = 1.0;
+  }
+  else if (value < 30000)
+  {
+    decayFloat = 0.915;
+  }
+  else
+  {
+    decayFloat = value / 32767.0;
+  }
+  
   for (int i = 0; i <MAX_STRINGS; i++)
   {
-  stringArray[i].setDecayTime(value);//it is currently static, but could actually be implemented differently on individual strings
+  stringArray[i].setDecayTime(decayFloat);
   }
   return;
 }
 
-void setPitchBend(int pitchBend)//pitchbend - currently is not optimal on bend down during decay
+inline void setPitchBend(uint32_t pitchBend)//pitchbend - currently is not optimal on bend down during decay
 {
   double pitchDouble = ((double)pitchBend) * PITCHBEND_RANGE;
   double pitchResult = exp2f(pitchDouble);
@@ -110,7 +125,11 @@ void setPitchBend(int pitchBend)//pitchbend - currently is not optimal on bend d
   }
   return;
 }
-
+inline float setAttack (uint32_t velocity)
+{
+  
+  return DIV16BIT *(float((velocity*velocity)<<2)+1020.0);
+}
 void stringsSetup()//initial setup
 {
   octaveDivSetup();
@@ -135,15 +154,15 @@ void stringsSetup()//initial setup
 
 void stringPlayer(uint8_t midiNote, uint8_t velIn)//two parameters from the midi section.  
 {
-  int32_t velocity = (velIn << 9) +511;
-  static uint8_t strings;
-    if (++strings > MAX_STRINGS - 1)
+  float velocity=  setAttack(velIn);
+    if (++stringVoice > MAX_STRINGS - 1)
     { 
-   strings = 0;
+   stringVoice = 0;
     }
-     stringArray[0].noteOff();
-      stringArray[0].noteOn(midiNotesScaled[midiNote], velocity, octaveDivMidiNote[strings]);
-      
+     //stringArray[stringVoice].noteOff();
+      stringArray[stringVoice].noteOn(midiNotesScaled[midiNote], velocity, octaveDivMidiNote[stringVoice]);
+      Serial.print("STRING VOICE: ");
+      Serial.println(stringVoice);
 return;
 
 }

@@ -2,7 +2,6 @@
      3/Feb/2019 Initial commit to Github. Modified Audio libraries to increase sample rate and also fix issues with KP engine
  
 */
-#define  isFeather 
 
 
 #include <MIDI.h>
@@ -14,6 +13,7 @@
 #include <Wire.h>
 #define MIDI_SERIAL Serial1
 #define A440 440.0
+#define DIV16BIT 1.0/65536
 
 int32_t MidiNotesDelay[128];//stores the size of the memory block for the strings
 double MidiNotesFreq[128]; //frequency calculation for MIDI
@@ -48,25 +48,23 @@ void setup()
   midiSetup();//creates midi
   delayMicroseconds(700000);//settling time? this came with the example
 }
-
 void loop()
 {
   //midiB.read();//this is the only thing in our loop
-  noteTest=48;
-//  
-//    if((noteTest+12) > 127)
-//    {
-//      noteTest=0;
-//    }
-//    else 
-//    {
-//      noteTest=noteTest+12;
-//    }
+ 
+  
+    if((noteTest++) > 127)
+    {
+      noteTest=0;
+    }
 
-     stringPlayer(noteTest, 127);
+
+     stringPlayer(60, noteTest);
 
 
      Serial.println("NOTE ON");
-    delayMicroseconds(1000000000);
+    delayMicroseconds(1000000);
+    
+
     
 }
