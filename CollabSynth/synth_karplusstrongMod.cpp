@@ -118,12 +118,12 @@ void AudioSynthKarplusStrongMod::update(void)
     for (int i = 0; i < bufferLenPitch; i++) //initial load of tasty noise
     {
       randGen();
-      buffer[i] = ((float)randomNum*floatScale*magnitude);
+      buffer[i] = ((float)randomNum*magnitude);
 
     }
     
     
-    uint32_t filterLoop = (octaveScaler);
+    uint32_t filterLoop = (octaveScaler>>3);
     if (filterLoop <= 2)
     {
       filterLoop = 2;
@@ -142,9 +142,10 @@ void AudioSynthKarplusStrongMod::update(void)
       }
     }
     }
+
          for (int i = 0; i < bufferLenPitch; i++)
     {
-     buffer[i]=(buffer[i]*magnitude);
+     buffer[i]=(buffer[i]*magnitude*floatScale);
     }
      
     state = 2;
@@ -165,7 +166,7 @@ void AudioSynthKarplusStrongMod::update(void)
   }
   int16_t *data = block->data;
 
-  
+  volatile uint32_t increment;
   checkLength();
   for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
     float in = buffer[bufferIndex];
@@ -173,9 +174,10 @@ void AudioSynthKarplusStrongMod::update(void)
     *data++ = int16_t(out);
     buffer[bufferIndex] = out;
     prior = in;
-  //  if((increment++ >=octaveScaler)||octaveScaler==1)
-    {      
-      increment=0;
+
+    if ((increment++ >= octaveScaler-1)||octaveScaler <= 1)
+    {
+      increment =0;
     if (++bufferIndex >= bufferLen) bufferIndex = 0;
     }
   }

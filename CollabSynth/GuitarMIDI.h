@@ -39,55 +39,45 @@ AudioConnection          patchCordOutRight(sumMix, 0, mainMixer4, 1);
 
 void octaveDivSetup()//might be a better way to do this, but right now it is useful to be able to do it this way
 {// each octave gets a different scaler. This scaler is also used in the actual string synth
-  for (int i = 0; i <= 11; i++)
+  for (int i = 1; i <= 11; i++)
   {
-    octaveDivMidiNote[i] = 1;
-    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
+    octaveDivMidiNote[i] = 1<<5;
   } 
   for (int i = 12; i <= 23; i++)
   {
-    octaveDivMidiNote[i] = 1;
-    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
+    octaveDivMidiNote[i] = 1<<4;
   } 
   for (int i = 24; i <= 35; i++)
   {
-    octaveDivMidiNote[i] = 1;
-    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
+    octaveDivMidiNote[i] = 1<<3;
   }
   for (int i = 36; i <= 47; i++)
   {
-    octaveDivMidiNote[i] = 1;
-    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
+    octaveDivMidiNote[i] = 1<<2;
   }
   for (int i = 48; i <= 59; i++)
   {
     octaveDivMidiNote[i] = 1<<1;
-    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
   for (int i = 60; i <= 71; i++)
   {
     octaveDivMidiNote[i] = 1;
-    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
     for (int i = 72; i <= 83; i++)
   {
     octaveDivMidiNote[i] = 1;
-    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
     for (int i = 84; i <= 95; i++)
   {
     octaveDivMidiNote[i] = 1;
-    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
     for (int i = 96; i <= 107; i++)
   {
     octaveDivMidiNote[i] = 1;
-    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
     for (int i = 108; i <= 127; i++)
   {
     octaveDivMidiNote[i] = 1;
-    midiNotesScaled[i] = MidiNotesDelay[i]/octaveDivMidiNote[i];
   }
   
 }
@@ -154,7 +144,7 @@ void stringsSetup()//initial setup
   
 }
 
-void stringPlayer(uint8_t midiNote=60, uint8_t velIn=127, uint8_t decayIn = 125)//two parameters from the midi section.  
+void stringPlayer(uint8_t midiNote=69, uint8_t velIn=127, uint8_t decayIn = 125)//two parameters from the midi section.  
 {
   setDecayVal(decayIn);
   float velocity=  setAttack(velIn);
@@ -169,7 +159,9 @@ void stringPlayer(uint8_t midiNote=60, uint8_t velIn=127, uint8_t decayIn = 125)
     {
       stringArray[stringVoice-1].noteOff();
     }
-      stringArray[stringVoice].noteOn(MidiNotesDelay[midiNote], velocity, octaveDivMidiNote[midiNote]);
+    
+      stringArray[stringVoice-1].noteOff();
+      stringArray[0].noteOn(MidiNotesDelay[midiNote], velocity, octaveDivMidiNote[midiNote]);
 
       
       Serial.print("STRING VOICE: ");

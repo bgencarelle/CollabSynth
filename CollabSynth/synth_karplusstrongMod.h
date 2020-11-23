@@ -29,7 +29,7 @@
 #include "Arduino.h"
 #include "AudioStream.h"
 #include "utility/dspinst.h"
-#define MAX_BUFF 800
+#define MAX_BUFF 900
 #define AVG_LOOPS 2
 #define FLOATSCALE32  32767.0/2147483648.0
 #define FLOATSCALE16 32767.0/32768.0
