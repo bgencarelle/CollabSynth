@@ -29,13 +29,12 @@
 #include "Arduino.h"
 #include "AudioStream.h"
 #include "utility/dspinst.h"
-#define MAX_BUFF 900
+#define MAX_BUFF 1200
 #define AVG_LOOPS 2
 #define FLOATSCALE32  32767.0/2147483648.0
-#define FLOATSCALE16 32767.0/32768.0
+//#define FLOATSCALE16 32767.0/32768.0
 #define HARDWARE_RANDOM 1 //Forgot what they call samd51 in the preprocessor section
-
-
+#define A440 440.00
 
 class AudioSynthKarplusStrongMod : public AudioStream
 {
@@ -55,38 +54,26 @@ class AudioSynthKarplusStrongMod : public AudioStream
     static float floatScale;
     float decayTime;
     float globalPitch;
-    uint32_t bufferLen;
+    uint32_t noteIn;
     uint32_t bufferLenPitch;
-    float magnitude; // current output
-
-
-    static void randGenStartup(boolean startFlag = 1)
-    {
-      if (startFlag)
-      {
-
-        MCLK->APBCMASK.reg |= MCLK_APBCMASK_TRNG;    // Activate the CLK_TRNG_APB clock
-        NVIC_SetPriority(TRNG_IRQn, 0);              // Set NVIC priority for TRNG to 0
-        NVIC_EnableIRQ(TRNG_IRQn);                   // Connect TRNG to NVIC
-        TRNG->INTENCLR.reg = TRNG_INTENCLR_DATARDY;  // Disable the TRNG interrupt
-        TRNG->CTRLA.reg = TRNG_CTRLA_ENABLE;         // Enable the TRNG peripheral
-        startFlag= 0;
-        delayMicroseconds(10);
-      }
-    }
+    float magnitude; // current outpute 
+    static uint32_t MidiNotesDelay[127];//stores the size of the memory block for the strings
+    static double MidiNotesFreq[127]; //frequency calculation for MIDI
+    static uint32_t midiNotesScaled[127]; //result
+    static void stringsSetup(boolean firstStart=0);
+    static uint8_t octaveDivMidiNote[127];//this scales the delay blocks to minimize memory
+    static void octaveDivSetup();
+    
     void noteOff() 
     {
       state = 0;
     }
-    void noteOn(uint32_t len = 440, float vel=1.0, uint32_t octaveDiv = 1)
+    void noteOn(uint32_t note = 69, float vel=1.0)
     {
-
-      octaveScaler = octaveDiv;
-      if (len > MAX_BUFF - 1) len = MAX_BUFF - 1; //for pitch shifting
-      bufferLen = len;
-      bufferLenPitch = len;
+      if (note > 120) note=120; //for pitch shifting
+      if (note <1) note = 1;
+      noteIn = note;
       bufferIndex = 0;
-
       if (vel >1.0)
        {
         magnitude = 1.0;
@@ -94,7 +81,6 @@ class AudioSynthKarplusStrongMod : public AudioStream
       else if (vel > .014)
       {
         magnitude = vel;
-
       } else
       {
         magnitude=0.0;
@@ -103,14 +89,14 @@ class AudioSynthKarplusStrongMod : public AudioStream
       state = 1;
       return;
     }
-
-
-       void randGen();
+    void randGen();
     void setPitchBend(float pitch = 1.0);
     void setDecayTime(float decay = 1.0);
     void inline checkLength(void);
     virtual void update(void);
+    
   private:
+    
     uint8_t  state;     // 0=steady output, 1=begin on next update, 2=playing
     uint32_t bufferIndex;
     float buffer[MAX_BUFF]; // TODO: dynamically use audio memory blocks

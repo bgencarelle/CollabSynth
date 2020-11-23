@@ -36,52 +36,6 @@ AudioConnection          patchCordOutLeft(sumMix, 0, mainMixer4, 0);
 AudioConnection          patchCordOutRight(sumMix, 0, mainMixer4, 1);
 
 
-
-void octaveDivSetup()//might be a better way to do this, but right now it is useful to be able to do it this way
-{// each octave gets a different scaler. This scaler is also used in the actual string synth
-  for (int i = 1; i <= 11; i++)
-  {
-    octaveDivMidiNote[i] = 1<<5;
-  } 
-  for (int i = 12; i <= 23; i++)
-  {
-    octaveDivMidiNote[i] = 1<<4;
-  } 
-  for (int i = 24; i <= 35; i++)
-  {
-    octaveDivMidiNote[i] = 1<<3;
-  }
-  for (int i = 36; i <= 47; i++)
-  {
-    octaveDivMidiNote[i] = 1<<2;
-  }
-  for (int i = 48; i <= 59; i++)
-  {
-    octaveDivMidiNote[i] = 1<<1;
-  }
-  for (int i = 60; i <= 71; i++)
-  {
-    octaveDivMidiNote[i] = 1;
-  }
-    for (int i = 72; i <= 83; i++)
-  {
-    octaveDivMidiNote[i] = 1;
-  }
-    for (int i = 84; i <= 95; i++)
-  {
-    octaveDivMidiNote[i] = 1;
-  }
-    for (int i = 96; i <= 107; i++)
-  {
-    octaveDivMidiNote[i] = 1;
-  }
-    for (int i = 108; i <= 127; i++)
-  {
-    octaveDivMidiNote[i] = 1;
-  }
-  
-}
-
 inline void setDecayVal(uint32_t modValue)// this sets the decay time of the strings. It is currently mapped to the mod wheel, but is technically actually a sustain
 {
   float value = 28703+ float((modValue) << 5) ; //need an offset, otherwise too severe
@@ -124,9 +78,7 @@ inline float setAttack (uint32_t velocity)
 }
 void stringsSetup()//initial setup
 {
-  octaveDivSetup();
   float stringScaler =  4.0/(float)MAX_STRINGS;
-
   for (int i = 0; i < MIXER_COUNT; i++)
   {
     mixer[i].gain(0, stringScaler);
@@ -136,7 +88,7 @@ void stringsSetup()//initial setup
     
     sumMix.gain(i,1);
   }
-  stringArray[0].randGenStartup(1);//
+  stringArray[0].stringsSetup(1);//
 
   setDecayVal(127);
   setPitchBend(0);
@@ -151,7 +103,6 @@ void stringPlayer(uint8_t midiNote=69, uint8_t velIn=127, uint8_t decayIn = 125)
 
     if (++stringVoice > MAX_STRINGS - 1)
     { 
-      
      stringArray[MAX_STRINGS - 1].noteOff();
      stringVoice = 0;
     } 
@@ -161,7 +112,7 @@ void stringPlayer(uint8_t midiNote=69, uint8_t velIn=127, uint8_t decayIn = 125)
     }
     
       stringArray[stringVoice-1].noteOff();
-      stringArray[0].noteOn(MidiNotesDelay[midiNote], velocity, octaveDivMidiNote[midiNote]);
+      stringArray[0].noteOn(midiNote, velocity);
 
       
       Serial.print("STRING VOICE: ");
