@@ -1,5 +1,5 @@
 #define MAX_STRINGS 12
-#define MIXER_COUNT MAX_STRINGS/4 // 1 mixer for every 4 voices
+#define MIXER_COUNT MAX_STRINGS>>2 // 1 mixer for every 4 voices
 #define PITCHBEND_RANGE -(1.0/8192.0)  //should be 8192 >> or << by no more than say 5
 
 volatile uint8_t stringVoice=0;
@@ -76,9 +76,9 @@ inline float setAttack (uint32_t velocity)
   
   return DIV16BIT *(float((velocity*velocity)<<2)+1020.0);
 }
-void stringsSetup()//initial setup
+void sketchStringsInit()//initial setup
 {
-  float stringScaler =  4.0/(float)MAX_STRINGS;
+  float stringScaler =  4.0/MAX_STRINGS;
   for (int i = 0; i < MIXER_COUNT; i++)
   {
     mixer[i].gain(0, stringScaler);
@@ -88,7 +88,7 @@ void stringsSetup()//initial setup
     
     sumMix.gain(i,1);
   }
-  stringArray[0].stringsSetup(1);//
+  stringArray[0].stringsSetup(1);
 
   setDecayVal(127);
   setPitchBend(0);
@@ -103,18 +103,10 @@ void stringPlayer(uint8_t midiNote=69, uint8_t velIn=127, uint8_t decayIn = 125)
 
     if (++stringVoice > MAX_STRINGS - 1)
     { 
-     stringArray[MAX_STRINGS - 1].noteOff();
      stringVoice = 0;
     } 
-    else
-    {
-      stringArray[stringVoice-1].noteOff();
-    }
-    
-      stringArray[stringVoice-1].noteOff();
+      stringArray[0].noteOff();
       stringArray[0].noteOn(midiNote, velocity);
-
-      
       Serial.print("STRING VOICE: ");
       Serial.println(stringVoice);
       

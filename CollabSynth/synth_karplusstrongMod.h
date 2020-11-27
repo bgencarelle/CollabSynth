@@ -29,11 +29,10 @@
 #include "Arduino.h"
 #include "AudioStream.h"
 #include "utility/dspinst.h"
-#define MAX_BUFF 1200
-#define AVG_LOOPS 2
+#define MAX_BUFF 800
+#define AVG_LOOPS 4
 #define FLOATSCALE32  32767.0/2147483648.0
 //#define FLOATSCALE16 32767.0/32768.0
-#define HARDWARE_RANDOM 1 //Forgot what they call samd51 in the preprocessor section
 #define A440 440.00
 
 class AudioSynthKarplusStrongMod : public AudioStream
@@ -57,17 +56,21 @@ class AudioSynthKarplusStrongMod : public AudioStream
     uint32_t noteIn;
     uint32_t bufferLenPitch;
     float magnitude; // current outpute 
-    static uint32_t MidiNotesDelay[127];//stores the size of the memory block for the strings
-    static double MidiNotesFreq[127]; //frequency calculation for MIDI
-    static uint32_t midiNotesScaled[127]; //result
+    static double midiNotesFreq[128]; //frequency calculation for MIDI
+    static uint32_t midiNotesDelay[128]; //result
     static void stringsSetup(boolean firstStart=0);
-    static uint8_t octaveDivMidiNote[127];//this scales the delay blocks to minimize memory
+    static uint32_t octaveDivMidiNote[128];//this scales the delay blocks to minimize memory
     static void octaveDivSetup();
-    
+    static uint32_t filterScoop;
     void noteOff() 
     {
+        for (int i = 0; i < MAX_BUFF; i++)
+      { buffer[i] = 0.0;
+      }
       state = 0;
+      return;
     }
+    
     void noteOn(uint32_t note = 69, float vel=1.0)
     {
       if (note > 120) note=120; //for pitch shifting
@@ -96,13 +99,12 @@ class AudioSynthKarplusStrongMod : public AudioStream
     virtual void update(void);
     
   private:
-    
     uint8_t  state;     // 0=steady output, 1=begin on next update, 2=playing
     uint32_t bufferIndex;
     float buffer[MAX_BUFF]; // TODO: dynamically use audio memory blocks
     int32_t octaveScaler;
     static uint32_t seed;
-    volatile uint8_t increment; 
+    static boolean setupFlag;
 };
 
 #endif
