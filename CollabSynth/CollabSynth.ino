@@ -57,17 +57,25 @@ static uint32_t localFilterScoop = 0;
 
 void loop()
 {  
-
-  stringArray[0].filterScoop = 14;
+  setPitchBend(8192);
+  stringArray[0].filterScoop = 10;
 
   stringPlayer(69, 120, 127);
   
-  delayMicroseconds(400000);
+  delayMicroseconds(1000000);
 
+  
+  setPitchBend(1600);
+  
+  delayMicroseconds(1000000);
+
+  
+  setPitchBend(160);
+  
 //
 //  uint32_t availRam = FreeRam();
 //  
-  delayMicroseconds(2000000);
+  delayMicroseconds(9000000);
   if (++noteTest > 105) noteTest = 0;
 
 

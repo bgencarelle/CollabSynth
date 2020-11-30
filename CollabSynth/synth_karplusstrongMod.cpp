@@ -121,9 +121,9 @@ void AudioSynthKarplusStrongMod::octaveDivSetup()//might be a better way to do t
 }
 void AudioSynthKarplusStrongMod::setPitchBend(float pitch)
 {
-  if (pitch < 0.250f )
+  if (pitch < 0.500f )
   {
-    globalPitch = .250f;
+    globalPitch = .500f;
   }
   else if (pitch >= 2.0f)
   {
@@ -154,20 +154,33 @@ void AudioSynthKarplusStrongMod::setDecayTime(float decay)
 }
 void AudioSynthKarplusStrongMod::checkLength(void)
 {
-  Serial.println(midiNotesDelay[noteIn]);
-  uint32_t testSize = uint32_t(midiNotesDelay[noteIn]);
-  Serial.println(testSize);
-  if (testSize <= 5)
+  uint32_t testSize = uint32_t(midiNotesDelay[noteIn]*globalPitch);//bigger buff means lower frequency
+  if (testSize <= 10)
   {
-    bufferLenPitch = 5;
+    bufferLenPitch = 10;
   }
-  else if (testSize >= MAX_BUFF - 1) {
-    bufferLenPitch = MAX_BUFF - 1;
+  else if (testSize >= MAX_BUFF) //for loop not needed 
+  {
+    bufferLenPitch = MAX_BUFF;
   }
   else
   {
     bufferLenPitch = testSize;
   }
+   bufferLen = MAX_BUFF-bufferLenPitch;
+    if (bufferLen >10)
+    {
+      
+      for (uint32_t i = bufferLen; i < MAX_BUFF; i++)
+      {
+
+        {
+          buffer[i] = decayTime*((buffer[i - 1]) + (buffer[i]))  ;
+        }
+  
+      }
+    }
+  
   return;
 }
 
@@ -177,7 +190,6 @@ void AudioSynthKarplusStrongMod::loadBuffer()
     {
       randGen();
       buffer[i] = ((float)randomNum * magnitude* floatScale);
-
     }
     uint32_t filterLoop = AudioSynthKarplusStrongMod::filterScoop;
     
@@ -199,15 +211,11 @@ void AudioSynthKarplusStrongMod::loadBuffer()
           buffer[i] = ((buffer[i - 1])* .500 + (buffer[i])* .500)  ;
         }
   
-      }
-     
-      
+      } 
     }
     for (uint32_t i = 0; i < MAX_BUFF; i++)
-    {
-      
-      buffer[i] = (buffer[i] * (1.0 + ((float)filterLoop / 256.0)));
-      
+    { 
+      buffer[i] = (buffer[i] * (1.0 + ((float)filterLoop / 256.0)));     
     }
 
   }
@@ -218,16 +226,21 @@ void AudioSynthKarplusStrongMod::update(void)
     return;
   if (state == 1)
   {
-    checkLength();
     octaveScaler = octaveDivMidiNote[noteIn];
     loadBuffer();
     state = 2;
+   
     return;
   }
   if (state == 2)
   {
+  checkLength();
   
-  //checkLength();
+    Serial.print("bufferLen: ");
+    Serial.println(bufferLen);
+    
+    Serial.print("bufferLenPitch: ");
+    Serial.println(bufferLenPitch);
   block = allocate();
   if (!block)
   {

@@ -54,6 +54,7 @@ class AudioSynthKarplusStrongMod : public AudioStream
     static volatile float globalPitch;
     uint32_t noteIn;
     uint32_t bufferLenPitch;
+    uint32_t bufferLen;
     float magnitude; // current outpute 
     static double midiNotesFreq[128]; //frequency calculation for MIDI
     static uint32_t midiNotesDelay[128]; //result
@@ -69,7 +70,7 @@ class AudioSynthKarplusStrongMod : public AudioStream
     
     void noteOn(uint32_t note = 69, float vel=1.0)
     {
-      if (note > 127) note=127; //for pitch shifting
+      if (note > 127) note=127; 
       if (note <1) note = 1;
       noteIn = note;
       bufferIndex = 0;
@@ -86,8 +87,6 @@ class AudioSynthKarplusStrongMod : public AudioStream
         noteOff();
       }
       
-  Serial.print("calculated bend: ");
-  Serial.println(globalPitch);
       state = 1;
       return;
     }

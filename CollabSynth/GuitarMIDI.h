@@ -67,8 +67,8 @@ inline void setDecayVal(uint32_t modValue)// this sets the decay time of the str
 inline void setPitchBend(uint32_t pitchBend=8192)//pitchbend - currently is not optimal on bend down during decay
 {
   if ( pitchBend >=16384) pitchBend = 16384;
-  
-  double pitchDouble = (((double)pitchBend+1.0) * PITCHBEND_RANGE);
+  if (pitchBend < 1) pitchBend = 1;
+  double pitchDouble = (((double)pitchBend) * PITCHBEND_RANGE);
   double pitchResult = 2.0*exp2f(pitchDouble);
     for (uint32_t i = 0; i <MAX_STRINGS; i++)
   {
