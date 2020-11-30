@@ -51,7 +51,7 @@ class AudioSynthKarplusStrongMod : public AudioStream
 #endif
     float randomFloat;
     float decayTime;
-    float globalPitch;
+    static volatile float globalPitch;
     uint32_t noteIn;
     uint32_t bufferLenPitch;
     float magnitude; // current outpute 
@@ -85,6 +85,9 @@ class AudioSynthKarplusStrongMod : public AudioStream
         magnitude=0.0;
         noteOff();
       }
+      
+  Serial.print("calculated bend: ");
+  Serial.println(globalPitch);
       state = 1;
       return;
     }
