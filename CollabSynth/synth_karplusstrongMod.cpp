@@ -46,113 +46,110 @@ void AudioSynthKarplusStrongMod::stringsSetup(boolean firstStart)
     double a = A440;//this is tuning standard
 
     octaveDivSetup();
-    for (int x = 0; x < 128; x++)
+    for (uint32_t x = 0; x < 127; x++)
     {
       double freqCalc = a * exp2((( ((double)(x)) - 69.0f) / 12.0f));
-      double oneOverOct = (1.0/(double)(octaveDivMidiNote[x]));
-      midiNotesDelay[x] = .75f+((((AUDIO_SAMPLE_RATE_EXACT / freqCalc)) * (oneOverOct))) ;
+      double oneOverOct = (1.0 / (double)(octaveDivMidiNote[x]));
+      midiNotesDelay[x] = .75f + ((((AUDIO_SAMPLE_RATE_EXACT / freqCalc)) * (oneOverOct))) ;
       midiNotesFreq[x] = freqCalc;
     }
-    firstStart=0;
+    firstStart = 0;
+    
   }
-
+return;
 }
 
 inline void AudioSynthKarplusStrongMod::randGen()                            // Called when TRNG data is available
 {
-  //  #ifdef HARDWARE_RANDOM
-  // This interrupt handler is called when a new random number is available; it reads the random number and clears the interrupt
   randomNum = TRNG->DATA.reg;                     // Read & store the TRNG data output
-
+  
   if (randomCheck == randomNum)
   {
-    delayMicroseconds(1);
     randGen();
   }
   else
   {
     TRNG->INTFLAG.bit.DATARDY = 1;             // Clear the DATA READY interrupt flag
     randomCheck = randomNum;
-    randomFloat = (float)randomNum * 1.0;
     return;
   }
-
 }
-
 
 void AudioSynthKarplusStrongMod::octaveDivSetup()//might be a better way to do this, but right now it is useful to be able to do it this way
 { // each octave gets a different scaler. This scaler is also used in the actual string synth
-  for (int i = 0; i <= 11; i++)
+  for (uint32_t i = 0; i <= 11; i++)
   {
-    octaveDivMidiNote[i] = 1 << 5 ;
+    octaveDivMidiNote[i] = 1 << 4 ;
   }
-  for (int i = 12; i <= 23; i++)
-  {
-    octaveDivMidiNote[i] = 1 << 4;
-  }
-  for (int i = 24; i <= 35; i++)
+  for (uint32_t i = 12; i <= 23; i++)
   {
     octaveDivMidiNote[i] = 1 << 3;
   }
-  for (int i = 36; i <= 47; i++)
+  for (uint32_t i = 24; i <= 35; i++)
   {
     octaveDivMidiNote[i] = 1 << 2;
   }
-  for (int i = 48; i <= 59; i++)
+  for (uint32_t i = 36; i <= 47; i++)
   {
     octaveDivMidiNote[i] = 1 << 1;
   }
-  for (int i = 60; i <= 71; i++)
+  for (uint32_t i = 48; i <= 59; i++)
+  {
+    octaveDivMidiNote[i] = 1 ;
+  }
+  for (uint32_t i = 60; i <= 71; i++)
   {
     octaveDivMidiNote[i] = 1;
   }
-  for (int i = 72; i <= 83; i++)
+  for (uint32_t i = 72; i <= 83; i++)
   {
     octaveDivMidiNote[i] = 1;
   }
-  for (int i = 84; i <= 95; i++)
+  for (uint32_t i = 84; i <= 95; i++)
   {
     octaveDivMidiNote[i] = 1;
   }
-  for (int i = 96; i <= 107; i++)
+  for (uint32_t i = 96; i <= 107; i++)
   {
     octaveDivMidiNote[i] = 1;
   }
-  for (int i = 108; i <= 127; i++)
+  for (uint32_t i = 108; i <= 127; i++)
   {
     octaveDivMidiNote[i] = 1;
   }
-
+  return;
 }
 void AudioSynthKarplusStrongMod::setPitchBend(float pitch)
 {
-  if (pitch < 0.25 )
+  if (pitch < 0.250f )
   {
-    globalPitch = .25;
+    globalPitch = .250f;
   }
-  else if (pitch >= 4.0)
+  else if (pitch >= 2.0f)
   {
-    globalPitch = 4.0;
+    globalPitch = 2.0f;
   }
   else
   {
     globalPitch = pitch;
   }
+  return;
 }
 void AudioSynthKarplusStrongMod::setDecayTime(float decay)
 {
-  if (decay >= 1.0)
+  if (decay >= 1.0f)
   {
-    decayTime = .49999;
+    decayTime = .49999f;
   }
-  else if (decay < 0.92)
+  else if (decay < 0.92f)
   {
-    decayTime = 0.45075;
+    decayTime = 0.45075f;
   }
   else
   {
-    decayTime = decay * .49999;
+    decayTime = decay * .49999f;
   }
+  return;
 }
 void AudioSynthKarplusStrongMod::checkLength(void)
 {
@@ -168,7 +165,52 @@ void AudioSynthKarplusStrongMod::checkLength(void)
   {
     bufferLenPitch = testSize;
   }
+  return;
 }
+
+void AudioSynthKarplusStrongMod::loadBuffer()
+    {
+    for (uint32_t i = 0; i < MAX_BUFF; i++) //initial load of tasty noise
+    {
+      randGen();
+      buffer[i] = ((float)randomNum * magnitude* floatScale);
+
+    }
+    uint32_t filterLoop = AudioSynthKarplusStrongMod::filterScoop;
+    
+    if (filterLoop <= AVG_LOOPS)
+    {
+      filterLoop = AVG_LOOPS;
+    }
+    for (uint32_t j = 0; j < 4; j++)
+    {
+      
+      for (uint32_t i = 0; i < MAX_BUFF; i++)
+      {
+        if (i == 0)
+        {
+          buffer[0] = ((buffer[MAX_BUFF - 1])* .500 + (buffer[0])* .500);
+        }
+        else
+        {
+          buffer[i] = ((buffer[i - 1])* .500 + (buffer[i])* .500)  ;
+        }
+      }
+      
+    }
+    for (uint32_t i = 0; i < MAX_BUFF; i++)
+    {
+      
+      buffer[i] = (buffer[i] * (1.0 + ((float)filterLoop / 256.0)));
+      
+    }
+//    for (uint32_t j = bufferLenPitch; j < MAX_BUFF; j++)
+//    {
+//      
+//      buffer[j] = (buffer[j] + buffer[j - 1]) * decayTime;
+//      
+//    }
+  }
 void AudioSynthKarplusStrongMod::update(void)
 {
   audio_block_t *block;
@@ -178,49 +220,9 @@ void AudioSynthKarplusStrongMod::update(void)
   {
     checkLength();
     octaveScaler = octaveDivMidiNote[noteIn];
-    
-    for (int i = 0; i < MAX_BUFF; i++) //initial load of tasty noise
-    {
-      randGen();
-      buffer[i] = (randomFloat * magnitude);
-    }
-    uint32_t filterLoop = AudioSynthKarplusStrongMod::filterScoop* (1+(octaveScaler >> 4));
-    
-    Serial.print("Octave Scaler: ");
-    Serial.println(filterLoop);    
-    Serial.print("BufflenPitch ");
-    Serial.println(bufferLenPitch);
-      for (int i = 0; i < MAX_BUFF; i++)
-    {
-      buffer[i] = (buffer[i] * magnitude);
-    }  
-    if (filterLoop <= AVG_LOOPS)
-    {
-      filterLoop = AVG_LOOPS;
-    }
-    for (int j = 0; j < filterLoop; j++)
-    {
-      for (int i = 0; i < MAX_BUFF; i++)
-      {
-        if (i == 0)
-        {
-          buffer[0] = ((buffer[MAX_BUFF - 1]) + (buffer[0])) * .500;
-        }
-        else
-        {
-          buffer[i] = ((buffer[i - 1]) + (buffer[i])) * .500 ;
-        }
-      }
-    }
-    for (int i = 0; i < MAX_BUFF; i++)
-    {
-      buffer[i] = (buffer[i] * (1.0+((float)(filterLoop)/128.0)));
-    }
-          for (int j = bufferLenPitch-1; j < MAX_BUFF; j++)
-          {
-            buffer[j]= (buffer[j]+buffer[j-1])*decayTime;
-          }
+    loadBuffer();
     state = 2;
+    return;
   }
   block = allocate();
   if (!block)
@@ -239,16 +241,15 @@ void AudioSynthKarplusStrongMod::update(void)
   int16_t *data = block->data;
 
   volatile uint32_t increment;
-
-  for (int i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+  float dataFloatConv;
+  for (uint32_t i = 0; i < AUDIO_BLOCK_SAMPLES; i++)
+  {
     float in = buffer[bufferIndex];
     float out = ((in + prior) * decayTime);
-    
-    *data++ = int16_t(out*floatScale);
-    
+    dataFloatConv = out ;
+    *data++ = int16_t(dataFloatConv);
     buffer[bufferIndex] = out;
     prior = in;
-
     if ((increment++ >= (octaveScaler - 1)) || octaveScaler <= 1)
     {
       increment = 0;
@@ -256,13 +257,12 @@ void AudioSynthKarplusStrongMod::update(void)
     }
   }
 
-
   transmit(block);
   release(block);
 }
 
 uint32_t AudioSynthKarplusStrongMod::octaveDivMidiNote[128];//this scales the delay blocks to minimize
-uint32_t AudioSynthKarplusStrongMod::filterScoop;//this scales the delay blocks to minimize
+uint32_t AudioSynthKarplusStrongMod::filterScoop=AVG_LOOPS;//this scales the delay blocks to minimize
 uint32_t AudioSynthKarplusStrongMod::midiNotesDelay[128];//stores the size of the memory block for the strings
 double AudioSynthKarplusStrongMod::midiNotesFreq[128]; //frequency calculation for MIDI
 boolean AudioSynthKarplusStrongMod::setupFlag = 1;

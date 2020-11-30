@@ -1,10 +1,13 @@
 #define MAX_STRINGS 12
-#define MIXER_COUNT MAX_STRINGS>>2 // 1 mixer for every 4 voices
+#define MIXER_COUNT 4 // 1 mixer for every 4 voices
+#if MIXER_COUNT < 1
+#error NEED MO STRINGS
+#endif 
+
 #define PITCHBEND_RANGE -(1.0/8192.0)  //should be 8192 >> or << by no more than say 5
+#define DIV16BIT 1.0/65535.0
 
-volatile uint8_t stringVoice=0;
-volatile uint8_t lastNote[MAX_STRINGS];
-
+static volatile uint8_t stringVoice=0;
 // Special thanks to Matthew Rahtz - http://amid.fish/karplus-strong/
 
 AudioSynthKarplusStrongMod  stringArray[MAX_STRINGS];
@@ -31,9 +34,9 @@ AudioConnection          patchCord10(stringArray[10], 0, mixer[2], 2);
 AudioConnection          patchCord11(stringArray[11], 0, mixer[2], 3);
 AudioConnection          patchCordSubMix2(mixer[2], 0, sumMix, 2);
 #endif
-
 AudioConnection          patchCordOutLeft(sumMix, 0, mainMixer4, 0);
 AudioConnection          patchCordOutRight(sumMix, 0, mainMixer4, 1);
+
 
 
 inline void setDecayVal(uint32_t modValue)// this sets the decay time of the strings. It is currently mapped to the mod wheel, but is technically actually a sustain
@@ -54,7 +57,7 @@ inline void setDecayVal(uint32_t modValue)// this sets the decay time of the str
     decayFloat = value / 32767.0;
   }
   
-  for (int i = 0; i <MAX_STRINGS; i++)
+  for (uint32_t i = 0; i <MAX_STRINGS; i++)
   {
   stringArray[i].setDecayTime(decayFloat);
   }
@@ -63,9 +66,9 @@ inline void setDecayVal(uint32_t modValue)// this sets the decay time of the str
 
 inline void setPitchBend(uint32_t pitchBend)//pitchbend - currently is not optimal on bend down during decay
 {
-  double pitchDouble = ((double)pitchBend) * PITCHBEND_RANGE;
+  double pitchDouble = (((double)pitchBend) * PITCHBEND_RANGE);
   double pitchResult = exp2f(pitchDouble);
-    for (int i = 0; i <MAX_STRINGS; i++)
+    for (uint32_t i = 0; i <MAX_STRINGS; i++)
   {
   stringArray[i].setPitchBend(pitchResult);
   }
@@ -73,19 +76,18 @@ inline void setPitchBend(uint32_t pitchBend)//pitchbend - currently is not optim
 }
 inline float setAttack (uint32_t velocity)
 {
-  
   return DIV16BIT *(float((velocity*velocity)<<2)+1020.0);
 }
+
 void sketchStringsInit()//initial setup
 {
-  float stringScaler =  4.0/MAX_STRINGS;
-  for (int i = 0; i < MIXER_COUNT; i++)
+  float stringScaler =   (.5f*(double)MIXER_COUNT)/((double)MAX_STRINGS*1.0f);
+  for (uint32_t i = 0; i < MIXER_COUNT; i++)
   {
     mixer[i].gain(0, stringScaler);
     mixer[i].gain(1, stringScaler);
     mixer[i].gain(2, stringScaler);
     mixer[i].gain(3, stringScaler);
-    
     sumMix.gain(i,1);
   }
   stringArray[0].stringsSetup(1);
@@ -101,15 +103,16 @@ void stringPlayer(uint8_t midiNote=69, uint8_t velIn=127, uint8_t decayIn = 125)
   setDecayVal(decayIn);
   float velocity=  setAttack(velIn);
 
-    if (++stringVoice > MAX_STRINGS - 1)
+    if (++stringVoice > (MAX_STRINGS - 1))
     { 
      stringVoice = 0;
     } 
-      stringArray[0].noteOff();
-      stringArray[0].noteOn(midiNote, velocity);
-      Serial.print("STRING VOICE: ");
-      Serial.println(stringVoice);
-      
+      stringArray[stringVoice].noteOff();
+      stringArray[stringVoice].noteOn(midiNote, velocity);
+//      Serial.print("NOTE: ");
+//      Serial.println(midiNote);      
+//      stringArray[stringVoice].noteOn(midiNote, velocity);
+//      Serial.print("STRING VOICE: ");
+//      Serial.println(stringVoice);      
 return;
-
 }

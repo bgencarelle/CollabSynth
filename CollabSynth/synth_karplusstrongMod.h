@@ -29,8 +29,8 @@
 #include "Arduino.h"
 #include "AudioStream.h"
 #include "utility/dspinst.h"
-#define MAX_BUFF 800
-#define AVG_LOOPS 4
+#define MAX_BUFF 1400
+#define AVG_LOOPS 8
 #define FLOATSCALE32  32767.0/2147483648.0
 //#define FLOATSCALE16 32767.0/32768.0
 #define A440 440.00
@@ -50,7 +50,6 @@ class AudioSynthKarplusStrongMod : public AudioStream
     int32_t randomCheck=1;
 #endif
     float randomFloat;
-    static float floatScale;
     float decayTime;
     float globalPitch;
     uint32_t noteIn;
@@ -64,16 +63,13 @@ class AudioSynthKarplusStrongMod : public AudioStream
     static uint32_t filterScoop;
     void noteOff() 
     {
-        for (int i = 0; i < MAX_BUFF; i++)
-      { buffer[i] = 0.0;
-      }
       state = 0;
       return;
     }
     
     void noteOn(uint32_t note = 69, float vel=1.0)
     {
-      if (note > 120) note=120; //for pitch shifting
+      if (note > 127) note=127; //for pitch shifting
       if (note <1) note = 1;
       noteIn = note;
       bufferIndex = 0;
@@ -92,10 +88,11 @@ class AudioSynthKarplusStrongMod : public AudioStream
       state = 1;
       return;
     }
-    void randGen();
+    void randGen(void);
     void setPitchBend(float pitch = 1.0);
     void setDecayTime(float decay = 1.0);
-    void inline checkLength(void);
+    void checkLength(void);
+    void loadBuffer(void);
     virtual void update(void);
     
   private:
@@ -105,6 +102,7 @@ class AudioSynthKarplusStrongMod : public AudioStream
     int32_t octaveScaler;
     static uint32_t seed;
     static boolean setupFlag;
+    static float floatScale;
 };
 
 #endif
