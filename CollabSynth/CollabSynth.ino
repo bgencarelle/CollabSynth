@@ -52,31 +52,23 @@ void setup()
   delayMicroseconds(70000);//settling time? this came with the example
   Serial.println("Begin");
 }
-int16_t pitch =0;
+uint32_t pitch =0;
 static uint32_t localFilterScoop = 0;
 
 void loop()
 {  
-  if ( (abs)(pitch) >= 8191)
-  {
-    pitch=8191;
-  }
-  pitch = pitch -400;
-  stringArray[0].filterScoop = 40;
 
-  stringPlayer(noteTest, 120, 127);
+  stringArray[0].filterScoop = 14;
+
+  stringPlayer(69, 120, 127);
   
-  delayMicroseconds(20000);
-  setPitchBend(pitch);
+  delayMicroseconds(400000);
+
 //
 //  uint32_t availRam = FreeRam();
 //  
-//  Serial.println("Free RAM ");
-//  Serial.println(availRam, DEC);
-  
   delayMicroseconds(2000000);
   if (++noteTest > 105) noteTest = 0;
-
 
 
 

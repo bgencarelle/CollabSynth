@@ -64,10 +64,12 @@ inline void setDecayVal(uint32_t modValue)// this sets the decay time of the str
   return;
 }
 
-inline void setPitchBend(uint32_t pitchBend)//pitchbend - currently is not optimal on bend down during decay
+inline void setPitchBend(uint32_t pitchBend=8192)//pitchbend - currently is not optimal on bend down during decay
 {
-  double pitchDouble = (((double)pitchBend) * PITCHBEND_RANGE);
-  double pitchResult = exp2f(pitchDouble);
+  if ( pitchBend >=16384) pitchBend = 16384;
+  
+  double pitchDouble = (((double)pitchBend+1.0) * PITCHBEND_RANGE);
+  double pitchResult = 2.0*exp2f(pitchDouble);
     for (uint32_t i = 0; i <MAX_STRINGS; i++)
   {
   stringArray[i].setPitchBend(pitchResult);
@@ -91,9 +93,7 @@ void sketchStringsInit()//initial setup
     sumMix.gain(i,1);
   }
   stringArray[0].stringsSetup(1);
-
   setDecayVal(127);
-  setPitchBend(0);
   return;
   
 }
@@ -107,8 +107,8 @@ void stringPlayer(uint8_t midiNote=69, uint8_t velIn=127, uint8_t decayIn = 125)
     { 
      stringVoice = 0;
     } 
-      stringArray[stringVoice].noteOff();
-      stringArray[stringVoice].noteOn(midiNote, velocity);
+      stringArray[0].noteOff();
+      stringArray[0].noteOn(midiNote, velocity);
 //      Serial.print("NOTE: ");
 //      Serial.println(midiNote);      
 //      stringArray[stringVoice].noteOn(midiNote, velocity);

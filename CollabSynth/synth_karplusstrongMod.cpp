@@ -133,6 +133,7 @@ void AudioSynthKarplusStrongMod::setPitchBend(float pitch)
   {
     globalPitch = pitch;
   }
+  
   return;
 }
 void AudioSynthKarplusStrongMod::setDecayTime(float decay)
@@ -153,7 +154,9 @@ void AudioSynthKarplusStrongMod::setDecayTime(float decay)
 }
 void AudioSynthKarplusStrongMod::checkLength(void)
 {
-  uint32_t testSize = uint32_t(midiNotesDelay[noteIn] * globalPitch);
+  Serial.println(midiNotesDelay[noteIn]);
+  uint32_t testSize = uint32_t(midiNotesDelay[noteIn]);
+  Serial.println(testSize);
   if (testSize <= 5)
   {
     bufferLenPitch = 5;
@@ -195,7 +198,9 @@ void AudioSynthKarplusStrongMod::loadBuffer()
         {
           buffer[i] = ((buffer[i - 1])* .500 + (buffer[i])* .500)  ;
         }
+  
       }
+     
       
     }
     for (uint32_t i = 0; i < MAX_BUFF; i++)
@@ -204,12 +209,7 @@ void AudioSynthKarplusStrongMod::loadBuffer()
       buffer[i] = (buffer[i] * (1.0 + ((float)filterLoop / 256.0)));
       
     }
-//    for (uint32_t j = bufferLenPitch; j < MAX_BUFF; j++)
-//    {
-//      
-//      buffer[j] = (buffer[j] + buffer[j - 1]) * decayTime;
-//      
-//    }
+
   }
 void AudioSynthKarplusStrongMod::update(void)
 {
@@ -224,6 +224,10 @@ void AudioSynthKarplusStrongMod::update(void)
     state = 2;
     return;
   }
+  if (state == 2)
+  {
+  
+  //checkLength();
   block = allocate();
   if (!block)
   {
@@ -259,8 +263,9 @@ void AudioSynthKarplusStrongMod::update(void)
 
   transmit(block);
   release(block);
+  }
 }
-
+volatile float AudioSynthKarplusStrongMod::globalPitch=1.0f;
 uint32_t AudioSynthKarplusStrongMod::octaveDivMidiNote[128];//this scales the delay blocks to minimize
 uint32_t AudioSynthKarplusStrongMod::filterScoop=AVG_LOOPS;//this scales the delay blocks to minimize
 uint32_t AudioSynthKarplusStrongMod::midiNotesDelay[128];//stores the size of the memory block for the strings
